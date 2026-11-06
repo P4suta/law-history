@@ -1,10 +1,48 @@
 # Assurance scope
 
+The browser runtime calls the same history, reference, and amendment services through a repository port.
+Differential tests compare the browser record store with SQLite for historical observations, nanosecond cutoffs, deterministic fact ties, history ordering, differences, and references.
+Fact selection orders timestamp and content address pairs with `Iterator::max_by`.
+Observation aggregation orders canonical timestamps with `std::cmp::max_by_key`.
+Equal keys produce the same value, so conditional reassignment adds no behavior.
+The production cutoff predicate admits earlier and equal observations and rejects later observations.
+Kani checks all three orderings and requires a witness for each ordering.
+The predicate receives comparisons of the same canonical timestamp strings used by the native index.
+The size predicate checks the inclusive input limit over every machine-size input and limit.
+Export and restoration use the same snapshot limit and predicate.
+An engine transaction checks exportability before committing a mutation.
+A regression starts with a large valid corpus and rejects an update that would exceed the restoration budget, then restores the retained corpus.
+The test profile uses optimization level one to exercise large serialization boundaries within the bounded test runner.
+The proof doesn't establish the timestamp formatter, JSON parser, IndexedDB implementation, WebAssembly compiler, browser transport, or source interpretation.
+Native differential tests, canonical replay, fixed-seed fuzzing, and browser workflow tests cover those adapters within their declared input and execution bounds.
+Changes to timestamp representation, browser persistence, compiler targets, or verifier support require reassessing the boundary.
+
+The event model exhausts every pair of three timestamps across the Unix epoch, both execution orders, and every declared cutoff.
+Its reference orders facts by timestamp and content address independently of the store's replay implementation.
+The bounded model supplies 54 comparisons, not a proof over arbitrary histories.
+The model command computes its own source and contract digests and runs without owner-specific environment variables.
+An optional verification runner can supply its request bindings.
+Snapshot fault tests check content addresses, missing source and version dependencies, independent record schemas, observation references, empty batches, and exact input-size boundaries.
+The browser snapshot fuzz target starts with populated revision, batch, and fact records and also rehashes changed record envelopes.
+Rehashing reaches semantic record validation instead of stopping every generated input at the digest check.
+
+Browser regressions exercise the actual generated WebAssembly with a static server that returns 404 for API routes.
+The native engine creates an expected corpus from the same preserved fixture.
+The browser exports its WebAssembly corpus, and the test compares the complete serialized bytes with the native result before further edits.
+The tests require the selected law heading, a working comparison, and successful reload after collection.
+An earlier selection check could observe a temporary result heading before a stale completion callback cleared the selection.
+Navigation now merges updates with the current URL, and the regression checks the lasting selected state.
+A separate fault sequence corrupts a persisted corpus, restarts the worker, and imports valid data.
+The sequence covers an initialization failure that invalid-import tests on an already running worker couldn't reach.
+The worker retains the load diagnostic while allowing an explicit import to repair persistent state.
+Imported inventory facts and preserved history responses must both identify the requested law before collecting a revision.
+Law-identifier enumeration reads observation membership without applying a history cutoff, including a leap second beyond the native default cutoff sentinel.
+
 The production `law-domain` crate supplies validated Gregorian calendar days, temporal classification, decimal digit recognition and accumulation, amendment precondition decisions, structural classification, observation arbitration, schema-name validation, and unique text replacement.
 Kani imports those functions directly.
 Kani also imports the production CLI error-channel decision.
 The [proof inventory](../verification/obligations.json) identifies the required harnesses.
-The verification command requires exactly the 35 named harnesses, the pinned verifier version, and a successful inventory summary.
+The verification command requires exactly the 39 named harnesses, the pinned verifier version, and a successful inventory summary.
 Missing harnesses, tool errors, and resource stops can't produce a passing receipt.
 Every reported cover property must have a witness.
 The inventory requires exact witness counts for the termination, provision-context, ruby-context, revision-identity, inline-attribute, native-log, image-digest, and cover-evidence contracts.
@@ -89,13 +127,35 @@ Kani checks the supported decision core directly.
 The native oracle, concrete UTF-8 harnesses, and fixed-seed fuzz target assess the adapter.
 Expanding native string support in the verifier or changing the search implementation requires reassessing the adapter proof.
 
-Mutation testing uses the pinned cargo-mutants 27.1.0 over the production `law-domain`, `law-history`, and CLI packages.
+Mutation testing uses the pinned cargo-mutants 27.1.0 over all runtime packages in the workspace, including `law-browser`.
+The runtime selection excludes the `xtask` source glob.
+The tooling selection mutates `xtask`.
+New workspace packages enter the runtime inventory without a package-name list.
 The mutation configuration excludes the Kani-only harness module because its assertions aren't part of the native runtime under mutation.
 Runtime source and native regression tests remain in scope.
 The domain scope selects mutations in `law-domain` while running workspace tests, including consumers of source files shared with the CLI and verification tooling.
 Direct domain regressions also check all 36 provision-context transitions and the current-state decision independently of adapter tests and Kani.
 Each mutation container owns a fresh anonymous Docker volume for compiler output with the local volume driver.
+The scheduler measures available storage before building an image and starting workers.
+Its plan leaves a 2 GiB allowance and estimates another 1 GiB per worker, up to the requested concurrency and the six-worker limit.
+Insufficient capacity or a measurement failure stops the campaign.
+An independent boundary oracle and a Kani harness check the production scheduling arithmetic, including zero capacity, exact thresholds, and the largest allowed count.
+The tests also inject measurement errors and missing filesystem paths.
+The allowance isn't an exclusive storage reservation, so other writers can still consume space.
+Storage failures remain incomplete verification.
+Inspect the scheduling arithmetic before starting a campaign:
+
+```sh
+mise x -- cargo xtask mutation-capacity --available-bytes 10737418240 --jobs 6
+```
+
+The command reports the supplied capacity assumption.
+The mutation runner reads the filesystem before scheduling.
 Shards don't share writable build directories, and every shard runs its unmutated baseline.
+The image compiles WebAssembly dependencies before mutation testing.
+Each container has a private writable copy of that cache.
+Browser tests still build their current source and compare its output with the native engine.
+The cache keeps initial dependency compilation outside the unchanged sixty-second test budget.
 Mutation subprocesses use a private 512 MiB tmpfs scratch mount within the unchanged 2 GiB memory limit and have no external network access.
 Local HTTP fixtures use loopback, and the regular native gate still checks the host's real filesystem.
 The [local-build-storage decision](adr/use-linux-local-mutation-build-storage.md) removes host sharing from compiler output and requires owned volume cleanup.
@@ -138,6 +198,10 @@ Kani checks the production digest predicate over arbitrary byte sequences of zer
 Native tests check all 256 byte values at every digest position and both length boundaries.
 The object-codec fuzz target also compares image references with an independent delimiter and character-alphabet oracle.
 Docker remains responsible for repository syntax, image availability, and image execution.
+Each verification build retains a distinct Docker tag before resolving its immutable identity, so concurrent builds don't replace an active campaign's image reference.
+Process regressions check distinct build tags, each independent inspection and removal exit state, and valid or invalid memory verdicts.
+The stop adapter checks real successful, failed, and unavailable processes without waiting for the production deadline.
+Finalization failures preserve the verifier's original exit and output.
 
 The secret scan includes a planted dummy token as a negative control and scans owned source paths with the pinned Gitleaks version.
 Dependency auditing uses the RustSec revision in the advisory record.

@@ -14,6 +14,7 @@ match_same_arms = "warn"
 [dependencies]
 libfuzzer-sys = "=0.4.13"
 law-history = { path = "../crates/law-history" }
+law-browser = { path = "../crates/law-browser" }
 serde_json = "1.0.145"
 
 [[bin]]
@@ -53,3 +54,10 @@ bench = false
 
 [workspace]
 members = ["."]
+
+[[bin]]
+name = "browser_snapshot"
+path = "fuzz_targets/browser_snapshot.rs"
+test = false
+doc = false
+bench = false

@@ -1,11 +1,15 @@
 [workspace]
 members = [
+  "crates/law-browser",
   "crates/law-domain",
   "crates/law-history",
   "crates/law-history-cli",
   "crates/xtask",
 ]
 resolver = "3"
+
+[profile.test]
+opt-level = 1
 
 [workspace.package]
 edition = "2024"
@@ -41,6 +45,7 @@ tower = { version = "0.5.2", features = ["util"] }
 tower-http = { version = "0.6.6", features = ["fs", "limit", "set-header"] }
 utoipa = { version = "5.4.0", features = ["chrono"] }
 zstd = { version = "=0.14.3", default-features = false }
+wasm-bindgen = "=0.2.130"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

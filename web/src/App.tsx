@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactElement, useEffect, useState } from "react";
+import { type FormEvent, Fragment, type ReactElement, useEffect, useState } from "react";
 import {
   type LawElement,
   loadDiff,
@@ -17,11 +17,33 @@ import {
   simulateScenario,
   type Temporal,
 } from "./api";
+import { browserMode } from "./browser";
+import { Corpus } from "./Corpus";
 
-function text(node: LawElement): string {
+function text(node: LawElement, parentRuby = false): string {
+  if (node.tag === "Rt" && parentRuby) return "";
   return (node.content ?? [])
-    .map((part) => (part.kind === "text" ? part.value : text(part.value)))
+    .map((part) => (part.kind === "text" ? part.value : text(part.value, node.tag === "Ruby")))
     .join("");
+}
+
+function LawText({
+  node,
+  parentRuby = false,
+}: {
+  node: LawElement;
+  parentRuby?: boolean;
+}): ReactElement {
+  const children = (node.content ?? []).map((part, index) =>
+    part.kind === "text" ? (
+      <Fragment key={index}>{part.value}</Fragment>
+    ) : (
+      <LawText key={index} node={part.value} parentRuby={node.tag === "Ruby"} />
+    ),
+  );
+  if (node.tag === "Ruby") return <ruby>{children}</ruby>;
+  if (node.tag === "Rt" && parentRuby) return <rt>{children}</rt>;
+  return <>{children}</>;
 }
 
 function errorMessage(error: unknown): string {
@@ -97,13 +119,17 @@ function DiffView({ diff }: { diff: Model["Diff"] }): ReactElement {
           {change.before && (
             <div className="removed">
               <strong>− Removed text</strong>
-              <p>{text(change.before.element)}</p>
+              <p>
+                <LawText node={change.before.element} />
+              </p>
             </div>
           )}
           {change.after && (
             <div className="added">
               <strong>+ Added text</strong>
-              <p>{text(change.after.element)}</p>
+              <p>
+                <LawText node={change.after.element} />
+              </p>
             </div>
           )}
         </article>
@@ -257,11 +283,15 @@ export function App(): ReactElement {
   const [busy, setBusy] = useState(false);
 
   function navigate(update: Partial<LocationState>): void {
-    const state = { ...location, ...update };
+    const state = { ...locationState(), ...update };
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(state))
       if (value) params.set(key === "knownAt" ? "known_at" : key, value);
-    window.history.pushState(null, "", `?${params.toString()}`);
+    window.history.pushState(
+      null,
+      "",
+      `?${params.toString()}${state.scenario ? window.location.hash : ""}`,
+    );
     setLocation(state);
   }
 
@@ -287,6 +317,8 @@ export function App(): ReactElement {
     setDiff(null);
     setImpact(null);
     setParliament(null);
+    setSimulation(null);
+    if (location.scenario) setScenarioText("");
     const time = timeOf(location);
     async function load(): Promise<void> {
       try {
@@ -300,12 +332,16 @@ export function App(): ReactElement {
         setHits(found.hits);
         setSearchDiagnostics(found.diagnostics);
         setStatus(currentStatus);
+        if (location.scenario) {
+          const saved = await loadScenario(location.scenario, controller.signal);
+          if (!controller.signal.aborted) setScenarioText(JSON.stringify(saved, null, 2));
+        }
         if (location.law) {
           const [selected, revisions, references, debate] = await Promise.all([
             loadLaw(location.law, time, controller.signal),
             loadHistory(location.law, time, controller.signal),
             loadRefs(location.law, time, controller.signal),
-            loadParliament(location.law, controller.signal),
+            loadParliament(location.law, time, controller.signal),
           ]);
           if (controller.signal.aborted) return;
           setSelection(selected);
@@ -324,10 +360,6 @@ export function App(): ReactElement {
           if (controller.signal.aborted) return;
           setDiff(difference);
           setImpact(affected);
-        }
-        if (location.scenario) {
-          const saved = await loadScenario(location.scenario, controller.signal);
-          if (!controller.signal.aborted) setScenarioText(JSON.stringify(saved, null, 2));
         }
       } catch (failure) {
         if (!controller.signal.aborted) setError(errorMessage(failure));
@@ -401,7 +433,11 @@ export function App(): ReactElement {
       if (save && result.diagnostics.length === 0) {
         const id = await saveScenario(scenario);
         navigate({ scenario: id });
-        setMessage("Scenario saved. The URL identifies the saved scenario in this store.");
+        setMessage(
+          browserMode
+            ? "Scenario saved. The URL carries the pinned recipe. Export the corpus to share the exact source versions."
+            : "Scenario saved. The URL identifies the saved scenario in this store.",
+        );
       }
     } catch (failure) {
       setError(errorMessage(failure));
@@ -412,14 +448,28 @@ export function App(): ReactElement {
 
   return (
     <>
-      <a className="skip" href="#main">
+      <a
+        className="skip"
+        href="#main"
+        onClick={(event): void => {
+          event.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+      >
         Skip to search
       </a>
       <header>
         <h1>law-history</h1>
         <p>Japanese legislation by enforcement date and observation time</p>
       </header>
-      <main id="main">
+      <main id="main" tabIndex={-1}>
+        {browserMode && (
+          <Corpus
+            changed={(law): void =>
+              navigate({ ...(law ? { law, q: "", version: "", from: "", to: "" } : {}) })
+            }
+          />
+        )}
         <section aria-labelledby="search-heading">
           <h2 id="search-heading">Find a law</h2>
           <form onSubmit={search} className="search-form">
@@ -542,7 +592,9 @@ export function App(): ReactElement {
                         <h3>
                           {item.node.tag} {item.node.attributes?.Num ?? ""}
                         </h3>
-                        <p lang="ja">{text(item.node)}</p>
+                        <p lang="ja">
+                          <LawText node={item.node} />
+                        </p>
                         <p>
                           <code>{item.path}</code>
                         </p>
@@ -624,11 +676,11 @@ export function App(): ReactElement {
                         {speech.speaker} · {speech.date} · {speech.meeting}
                       </summary>
                       <p lang="ja">{speech.text}</p>
-                      <a
-                        href={/^https:\/\//u.test(speech.url) ? speech.url : "#parliament-heading"}
-                      >
-                        Original speech
-                      </a>
+                      {/^https:\/\//u.test(speech.url) ? (
+                        <a href={speech.url}>Original speech</a>
+                      ) : (
+                        <span>Original speech URL unavailable.</span>
+                      )}
                       <Source source={speech.source} />
                     </details>
                   ))}
@@ -731,7 +783,9 @@ export function App(): ReactElement {
               {location.scenario && (
                 <p>
                   Saved scenario{" "}
-                  <a href={`?scenario=${encodeURIComponent(location.scenario)}`}>
+                  <a
+                    href={`?scenario=${encodeURIComponent(location.scenario)}${browserMode ? window.location.hash : ""}`}
+                  >
                     {location.scenario}
                   </a>
                 </p>
@@ -757,7 +811,7 @@ export function App(): ReactElement {
         {" · "}
         <a href="https://kokkai.ndl.go.jp/">National Diet Library proceedings</a>
         {" · "}
-        <a href="/api/openapi.json">OpenAPI</a>
+        <a href={browserMode ? "./openapi.json" : "/api/openapi.json"}>OpenAPI</a>
       </footer>
     </>
   );

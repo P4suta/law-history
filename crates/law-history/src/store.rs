@@ -1,9 +1,8 @@
 use crate::{codec, model::*};
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, params};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     io::{Read, Write},
@@ -14,70 +13,12 @@ use std::{
 const INDEX_BUSY_TIMEOUT: Duration = Duration::from_secs(10);
 const SHA256_HEX_LENGTH: usize = 64;
 
-pub fn sha256(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
-enum Record {
-    Observation(Observation),
-    Batch {
-        schema_version: u32,
-        observations: Vec<Observation>,
-    },
-    Fact {
-        schema_version: u32,
-        key: String,
-        value: Value,
-        observed_at: DateTime<Utc>,
-    },
-}
+use crate::store_types::Record;
+pub use crate::store_types::{IndexedRevision, TemporalMetadata, sha256};
 
 pub struct Store {
     root: PathBuf,
     db: Connection,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct TemporalMetadata {
-    pub law_id: String,
-    pub revision_id: String,
-    pub promulgated: LegalDate,
-    #[serde(default)]
-    pub amendment_promulgated: Option<LegalDate>,
-    pub effective: LegalDate,
-    pub repeal: Option<Day>,
-    pub termination: Option<Termination>,
-    pub sequence: Option<u32>,
-    pub original_enactment: bool,
-    pub source: Provenance,
-    #[serde(default)]
-    pub metadata_source: Option<Provenance>,
-}
-
-impl From<&Revision> for TemporalMetadata {
-    fn from(revision: &Revision) -> Self {
-        Self {
-            law_id: revision.law_id.clone(),
-            revision_id: revision.revision_id.clone(),
-            promulgated: revision.promulgated.clone(),
-            amendment_promulgated: revision.amendment_promulgated.clone(),
-            effective: revision.effective.clone(),
-            repeal: revision.repeal,
-            termination: revision.termination.clone(),
-            sequence: revision.sequence,
-            original_enactment: revision.original_enactment,
-            source: revision.source.clone(),
-            metadata_source: revision.metadata_source.clone(),
-        }
-    }
-}
-
-pub struct IndexedRevision {
-    pub version: String,
-    pub observed_at: DateTime<Utc>,
-    pub metadata: TemporalMetadata,
 }
 
 #[derive(Debug, Serialize)]

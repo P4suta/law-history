@@ -16,11 +16,14 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod browser;
+mod complete_mutation_inventory;
 mod cover_evidence;
 mod image_reference;
 mod native_log;
 
-const FUZZ_TARGETS: [&str; 5] = [
+const FUZZ_TARGETS: [&str; 6] = [
+    "browser_snapshot",
     "law_xml",
     "legal_day",
     "amendment_text",
@@ -30,6 +33,7 @@ const FUZZ_TARGETS: [&str; 5] = [
 const FUZZ_RUNS: usize = 10_000;
 const VERIFICATION_TIMEOUT: Duration = Duration::from_secs(900);
 const VERIFIER_POLL_INTERVAL: Duration = Duration::from_millis(100);
+const VERIFICATION_IMAGE_RANDOM_BYTES: usize = 16;
 const SECRET_REJECTION_EXIT: i32 = 17;
 const RUSTSEC_REPOSITORY: &str = "https://github.com/RustSec/advisory-db";
 const GIT_COMMIT_HEX_LENGTH: usize = 40;
@@ -44,6 +48,7 @@ const NEGATIVE_PROOF_MESSAGE: &str =
 const KANI_COUNTEREXAMPLE_EXIT: i32 = 1;
 
 mod mutation;
+mod mutation_capacity;
 
 #[derive(Parser)]
 struct Cli {
@@ -53,6 +58,18 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    BuildBrowser,
+    PagesServer {
+        #[arg(long, default_value_t = 37652)]
+        port: u16,
+    },
+    BrowserModel,
+    MutationCapacity {
+        #[arg(long)]
+        available_bytes: u64,
+        #[arg(long)]
+        jobs: usize,
+    },
     Check,
     Audit,
     Schema,
@@ -271,13 +288,25 @@ fn image(root: &Path, supplied: Option<String>) -> anyhow::Result<String> {
         }
         return Ok(image);
     }
+    let identity = tempfile::Builder::new()
+        .prefix("build-")
+        .rand_bytes(VERIFICATION_IMAGE_RANDOM_BYTES)
+        .tempdir()?;
+    let tag = format!(
+        "law-history-verification:{}",
+        identity
+            .path()
+            .file_name()
+            .and_then(|name| name.to_str())
+            .context("The verification image tag is unavailable")?
+    );
     let status = Process::new("docker")
         .current_dir(root)
         .stdout(std::io::stderr())
         .args([
             "build",
             "--tag",
-            "law-history-verification",
+            &tag,
             "--file",
             "verification/Containerfile",
             ".",
@@ -287,13 +316,7 @@ fn image(root: &Path, supplied: Option<String>) -> anyhow::Result<String> {
         bail!("The verification image could not be built: {status}");
     }
     let output = Process::new("docker")
-        .args([
-            "image",
-            "inspect",
-            "law-history-verification",
-            "--format",
-            "{{.Id}}",
-        ])
+        .args(["image", "inspect", &tag, "--format", "{{.Id}}"])
         .output()?;
     if !output.status.success() {
         bail!("The verification image cannot be inspected");
@@ -383,7 +406,10 @@ fn container(root: &Path, supplied: Option<String>, fuzz: bool) -> anyhow::Resul
             EvidenceMethod::Fuzz,
             "cargo-fuzz 0.13.2; nightly-2026-10-01",
             &image,
-            "5 targets; 10000 runs each; seed 20261105; max_len 65536; ASan, overflow checks and debug assertions; 2 CPUs, 2048 MiB, 256 PIDs, 900 seconds per container",
+            &format!(
+                "{} targets; 10000 runs each; seed 20261105; max_len 65536; ASan, overflow checks and debug assertions; 2 CPUs, 2048 MiB, 256 PIDs, 900 seconds per container",
+                FUZZ_TARGETS.len()
+            ),
             &FUZZ_TARGETS.map(|target| (target, FUZZ_RUNS)),
         )?;
     } else {
@@ -550,6 +576,16 @@ impl Drop for OwnedContainer<'_> {
     }
 }
 
+fn stop_verifier(command: &mut Process) -> anyhow::Result<()> {
+    let stopped = command
+        .status()
+        .context("Cannot stop the owned verification container")?;
+    if !stopped.success() {
+        bail!("The owned verification container could not be stopped: {stopped}");
+    }
+    Ok(())
+}
+
 fn bounded_output(command: &mut Process, name: &str) -> anyhow::Result<Captured> {
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = command.spawn()?;
@@ -581,13 +617,9 @@ fn bounded_output(command: &mut Process, name: &str) -> anyhow::Result<Captured>
         }
         if started.elapsed() >= VERIFICATION_TIMEOUT {
             timed_out = true;
-            let stopped = Process::new("docker")
-                .args(["stop", "--timeout", "5", name])
-                .status()
-                .context("Cannot stop the owned verification container")?;
-            if !stopped.success() {
-                bail!("The owned verification container could not be stopped: {stopped}");
-            }
+            let mut stop = Process::new("docker");
+            stop.args(["stop", "--timeout", "5", name]);
+            stop_verifier(&mut stop)?;
             break child.wait()?;
         }
         std::thread::sleep(VERIFIER_POLL_INTERVAL);
@@ -598,19 +630,34 @@ fn bounded_output(command: &mut Process, name: &str) -> anyhow::Result<Captured>
     let stderr = error_reader
         .join()
         .map_err(|_| anyhow::anyhow!("Verifier error reader failed"))??;
+    let verifier = format!(
+        "verifier exit={:?}\nstdout:\n{}\nstderr:\n{}",
+        status.code(),
+        String::from_utf8_lossy(&stdout),
+        String::from_utf8_lossy(&stderr)
+    );
     let inspected = Process::new("docker")
         .args(["inspect", "--format", "{{.State.OOMKilled}}", name])
-        .output()?;
-    let removed = container_removal(name).output()?;
+        .output()
+        .with_context(|| format!("Cannot inspect the owned verification container; {verifier}"))?;
+    let removed = container_removal(name)
+        .output()
+        .with_context(|| format!("Cannot remove the owned verification container; {verifier}"))?;
     container.removed = removed.status.success();
     if !inspected.status.success() || !removed.status.success() {
-        bail!("Cannot inspect or remove the owned verification container");
+        bail!(
+            "Cannot inspect or remove the owned verification container; {verifier}\ninspection exit={:?}: {}\nremoval exit={:?}: {}",
+            inspected.status.code(),
+            String::from_utf8_lossy(&inspected.stderr),
+            removed.status.code(),
+            String::from_utf8_lossy(&removed.stderr)
+        );
     }
-    let state = String::from_utf8(inspected.stdout)?;
+    let state = String::from_utf8_lossy(&inspected.stdout);
     let memory_exceeded = match state.trim() {
         "true" => true,
         "false" => false,
-        _ => bail!("Unexpected container memory verdict"),
+        _ => bail!("Unexpected container memory verdict {state:?}; {verifier}"),
     };
     Ok(Captured {
         code: status.code(),
@@ -634,9 +681,15 @@ fn source_inventory(
     ) -> anyhow::Result<()> {
         for entry in fs::read_dir(path)? {
             let path = entry?.path();
+            if path == root.join("web/src/wasm") {
+                continue;
+            }
             if path.is_dir() {
                 visit(root, &path, output, source_only)?;
-            } else if !source_only || path.extension().is_some_and(|extension| extension == "rs") {
+            } else if !source_only
+                || path.extension().is_some_and(|extension| extension == "rs")
+                || path.file_name().is_some_and(|name| name == "Cargo.toml")
+            {
                 output.insert(
                     path.strip_prefix(root)?.to_string_lossy().into_owned(),
                     law_history::store::sha256(&fs::read(path)?),
@@ -646,8 +699,7 @@ fn source_inventory(
         Ok(())
     }
     let mut files = BTreeMap::new();
-    visit(root, &root.join("crates/law-domain/src"), &mut files, true)?;
-    visit(root, &root.join("crates/xtask/src"), &mut files, true)?;
+    visit(root, &root.join("crates"), &mut files, true)?;
     for path in [
         proof_source,
         "Cargo.toml",
@@ -659,6 +711,7 @@ fn source_inventory(
         ".cargo/config.toml",
         ".cargo/mutants.toml",
         ".gitignore",
+        "justfile",
         "mise.toml",
         "rust-toolchain.toml",
         "verification/obligations.json",
@@ -672,6 +725,24 @@ fn source_inventory(
         );
     }
     if fuzz {
+        visit(root, &root.join("web/src"), &mut files, false)?;
+        visit(root, &root.join("web/pages-tests"), &mut files, false)?;
+        visit(root, &root.join("web/tools"), &mut files, false)?;
+        for path in [
+            "web/package.json",
+            "web/package-lock.json",
+            "web/tsconfig.json",
+            "web/vite.config.ts",
+            "web/playwright.pages.config.ts",
+            "web/biome.json",
+            "web/index.html",
+            "web/openapi.json",
+        ] {
+            files.insert(
+                path.into(),
+                law_history::store::sha256(&fs::read(root.join(path))?),
+            );
+        }
         visit(root, &root.join("crates/law-history/src"), &mut files, true)?;
         visit(
             root,
@@ -1074,6 +1145,25 @@ fn main() -> anyhow::Result<()> {
     let root = root()?;
     match Cli::parse().command {
         Command::Check => check(&root),
+        Command::BuildBrowser => browser::build(&root),
+        Command::PagesServer { port } => browser::serve(&root, port),
+        Command::BrowserModel => browser::model(&root),
+        Command::MutationCapacity {
+            available_bytes,
+            jobs,
+        } => {
+            println!(
+                "{}",
+                serde_json::to_string(&serde_json::json!({
+                    "available_bytes":available_bytes,
+                    "requested_workers":jobs,
+                    "workers":mutation_capacity::workers(available_bytes, jobs),
+                    "reserve_bytes":mutation_capacity::RESERVE_BYTES,
+                    "per_worker_bytes":mutation_capacity::WORKER_BYTES
+                }))?
+            );
+            Ok(())
+        }
         Command::Audit => audit(&root),
         Command::Schema => schema(&root, true),
         Command::BrowserServer { port } => browser_server(&root, port),
@@ -1099,6 +1189,22 @@ fn main() -> anyhow::Result<()> {
 mod tests {
     use super::proof_report;
     use clap::Parser;
+
+    #[test]
+    fn verifier_stop_requires_a_successful_process_and_preserves_launch_errors() {
+        for (argument, succeeds) in [("--version", true), ("--invalid-stop-probe", false)] {
+            let mut command = super::Process::new(env!("CARGO"));
+            command
+                .arg(argument)
+                .stdout(super::Stdio::null())
+                .stderr(super::Stdio::null());
+            assert_eq!(super::stop_verifier(&mut command).is_ok(), succeeds);
+        }
+        let root = tempfile::tempdir().unwrap();
+        let mut missing = super::Process::new(root.path().join("missing"));
+        let error = super::stop_verifier(&mut missing).unwrap_err();
+        assert!(format!("{error:#}").contains("Cannot stop the owned verification container"));
+    }
 
     #[test]
     fn mutation_name_filters_are_available_for_native_diagnostic_controls() {
@@ -1339,6 +1445,58 @@ mod tests {
         );
         std::fs::remove_file(root.path().join("source.rs")).unwrap();
         assert!(super::snapshot_sources(root.path(), &files).is_err());
+    }
+
+    #[test]
+    fn assurance_inventory_binds_every_workspace_crate_and_the_browser_tests() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let files = super::source_inventory(&root, true, "crates/law-domain/src/lib.rs").unwrap();
+        for path in [
+            "justfile",
+            "crates/law-browser/src/lib.rs",
+            "crates/law-browser/Cargo.toml",
+            "crates/xtask/tests/browser_workspace.rs",
+            "web/pages-tests/published.spec.ts",
+            "web/src/history.worker.ts",
+            "web/package-lock.json",
+        ] {
+            assert!(
+                files.contains_key(path),
+                "Missing assurance dependency: {path}"
+            );
+        }
+        assert!(!files.keys().any(|path| path.starts_with("web/src/wasm/")));
+        let fixture = super::snapshot_sources(&root, &files).unwrap();
+        for (path, bytes) in [
+            ("web/src/wasm/generated.rs", "generated"),
+            ("crates/discovered-package/Cargo.toml", "[package]"),
+            (
+                "crates/discovered-package/src/lib.rs",
+                "pub fn discovered() {}",
+            ),
+            (
+                "crates/discovered-package/tests/behavior.rs",
+                "#[test] fn behavior() {}",
+            ),
+        ] {
+            let file = fixture.path().join(path);
+            std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+            std::fs::write(file, bytes).unwrap();
+        }
+        let inventory =
+            super::source_inventory(fixture.path(), true, "crates/law-domain/src/lib.rs").unwrap();
+        assert!(
+            !inventory
+                .keys()
+                .any(|path| path.starts_with("web/src/wasm/"))
+        );
+        for path in [
+            "crates/discovered-package/Cargo.toml",
+            "crates/discovered-package/src/lib.rs",
+            "crates/discovered-package/tests/behavior.rs",
+        ] {
+            assert!(inventory.contains_key(path));
+        }
     }
 
     #[test]

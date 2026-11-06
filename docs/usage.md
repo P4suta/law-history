@@ -180,6 +180,6 @@ The regular check also scans owned source files for secrets and requires its pla
 The dependency audit uses the pinned RustSec database revision and a live npm advisory query.
 The proof and fuzz commands build the pinned verification container and run it with 2 GiB memory, two CPUs, 256 processes, and a 900-second resource limit.
 A resource stop leaves verification inconclusive.
-The fuzz campaign uses a fixed seed and 10000 runs for each of the XML, legal-date, amending-document, object-codec, and reference-resolution targets.
+The fuzz campaign uses a fixed seed and 10000 runs for each of the XML, legal-date, amending-document, object-codec, reference-resolution, and browser-snapshot targets.
 The release check additionally requires complete source coverage and passing official amendment comparisons.
 An empty or incomplete corpus can't pass the release check.

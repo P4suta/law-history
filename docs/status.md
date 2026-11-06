@@ -3,6 +3,8 @@
 `law-history` is experimental software for inspecting Japanese national law history.
 The command-line interface, `HTTP API`, and Web interface operate on a local store of preserved sources and structured revisions.
 The source repository doesn't contain packaged releases or a complete law corpus.
+The [public website](https://p4suta.github.io/law-history/) collects selected law histories into a browser corpus and runs the shared Rust services in WebAssembly.
+The [browser guide](browser-corpus.md) covers collection, persistence, and transfer of pinned scenarios.
 
 ## Available workflows
 

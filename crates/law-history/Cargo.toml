@@ -9,21 +9,23 @@ publish = false
 [dependencies]
 law-domain = { path = "../law-domain" }
 anyhow.workspace = true
-axum.workspace = true
 base64.workspace = true
 chrono.workspace = true
 regex.workspace = true
-reqwest.workspace = true
 roxmltree.workspace = true
-rusqlite.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
+utoipa.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+axum.workspace = true
+reqwest.workspace = true
+rusqlite.workspace = true
 tempfile.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
-utoipa.workspace = true
 zstd.workspace = true
 
 [dev-dependencies]

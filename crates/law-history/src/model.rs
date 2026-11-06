@@ -418,6 +418,7 @@ pub enum HistoryError {
     #[error("Selection is ambiguous: {0:?}")]
     Ambiguous(Vec<Diagnostic>),
     #[error(transparent)]
+    #[cfg(not(target_arch = "wasm32"))]
     Storage(#[from] rusqlite::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),

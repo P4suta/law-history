@@ -1,6 +1,8 @@
 # Documentation for `law-history`
 
 The [project status](status.md) describes the supported workflows and incomplete corpus coverage.
+The [browser corpus guide](browser-corpus.md) covers the public website, direct collection, persistence, and scenario sharing.
+The [browser execution decision](adr/run-shared-history-rules-in-the-browser.md) records the shared Rust and static hosting boundary.
 The [source attribution](../DATA_SOURCES.md) distinguishes project code from upstream data and its terms.
 The [contribution guide](../CONTRIBUTING.md) covers reproducible development and defect reports.
 The [security reporting guide](../.github/SECURITY.md) provides a private reporting route.

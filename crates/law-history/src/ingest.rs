@@ -1,15 +1,22 @@
-use crate::{Store, model::*, store::sha256, xml::parse_xml};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::{Store, store::sha256};
+use crate::{model::*, xml::parse_xml};
 use anyhow::{Context, bail};
 use base64::Engine;
 use chrono::{DateTime, Utc};
+#[cfg(not(target_arch = "wasm32"))]
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, io::Read, time::Duration};
+use std::collections::BTreeSet;
+#[cfg(not(target_arch = "wasm32"))]
+use std::{io::Read, time::Duration};
 use utoipa::ToSchema;
 
 pub const EGOV_API: &str = "https://laws.e-gov.go.jp/api/2";
 pub const EGOV_TERMS: &str = "https://laws.e-gov.go.jp/terms";
+#[cfg(not(target_arch = "wasm32"))]
 const EXTRACTOR_VERSION: u32 = 7;
+#[cfg(not(target_arch = "wasm32"))]
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
@@ -143,13 +150,13 @@ fn merge_metadata<T: Serialize + serde::de::DeserializeOwned>(
 }
 
 #[derive(Debug, Deserialize)]
-struct RevisionsResponse {
-    law_info: LawInfo,
-    revisions: Vec<RevisionInfo>,
+pub(crate) struct RevisionsResponse {
+    pub(crate) law_info: LawInfo,
+    pub(crate) revisions: Vec<RevisionInfo>,
 }
 
 pub struct HistorySnapshot {
-    response: RevisionsResponse,
+    pub(crate) response: RevisionsResponse,
     source: Provenance,
 }
 
@@ -160,7 +167,11 @@ pub struct RevisionExpectation<'a> {
 }
 
 impl HistorySnapshot {
-    pub fn from_response(store: &Store, bytes: &[u8], url: &str) -> anyhow::Result<Self> {
+    pub fn from_response(
+        store: &impl crate::store_types::Repository,
+        bytes: &[u8],
+        url: &str,
+    ) -> anyhow::Result<Self> {
         let response: RevisionsResponse = serde_json::from_slice(bytes)?;
         validate_id(&response.law_info.law_id).map_err(anyhow::Error::msg)?;
         for info in &response.revisions {
@@ -199,10 +210,12 @@ struct DataResponse {
     law_full_text: String,
 }
 #[derive(Debug, Deserialize)]
+#[cfg(not(target_arch = "wasm32"))]
 struct LawEntry {
     law_info: LawInfo,
 }
 #[derive(Debug, Deserialize)]
+#[cfg(not(target_arch = "wasm32"))]
 struct LawsResponse {
     total_count: usize,
     next_offset: Option<usize>,
@@ -241,6 +254,7 @@ struct MetadataDisagreement {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg(not(target_arch = "wasm32"))]
 struct CacheEntry {
     digest: String,
     collected_at: DateTime<Utc>,
@@ -254,6 +268,7 @@ pub struct FetchedSource {
     pub acquired_at: Option<DateTime<Utc>>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg(not(target_arch = "wasm32"))]
 struct RevisionReceipt {
     metadata_sha256: String,
     version: String,
@@ -261,11 +276,13 @@ struct RevisionReceipt {
     extractor_version: u32,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 enum CollectedRevision {
     Reused(String),
     Saved(String),
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub struct Fetcher {
     client: Client,
     minimum_delay: Duration,
@@ -274,6 +291,7 @@ pub struct Fetcher {
     clock: Box<dyn Fn() -> DateTime<Utc> + Send + Sync>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Fetcher {
     pub fn new(minimum_delay: Duration, maximum_requests: Option<usize>) -> anyhow::Result<Self> {
         Self::with_clock(minimum_delay, maximum_requests, Utc::now)
@@ -404,6 +422,7 @@ impl Fetcher {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn catalog(store: &Store, fetcher: &mut Fetcher, refresh: bool) -> anyhow::Result<Catalog> {
     let mut offset = 0;
     let mut ids = BTreeSet::new();
@@ -482,14 +501,18 @@ fn legal_date(raw: Option<&str>, original: &str, basis: &str, scheduled: bool) -
     }
 }
 
-pub fn revision_from_response(store: &Store, bytes: &[u8], url: &str) -> anyhow::Result<Revision> {
+pub fn revision_from_response(
+    store: &impl crate::store_types::Repository,
+    bytes: &[u8],
+    url: &str,
+) -> anyhow::Result<Revision> {
     let data: DataResponse =
         serde_json::from_slice(bytes).context("Invalid e-Gov law-data envelope")?;
     revision_from_data(store, data, bytes, url)
 }
 
-fn revision_from_expected_response(
-    store: &Store,
+pub(crate) fn revision_from_expected_response(
+    store: &impl crate::store_types::Repository,
     bytes: &[u8],
     url: &str,
     expected: &RevisionExpectation<'_>,
@@ -514,7 +537,7 @@ fn revision_from_expected_response(
 }
 
 fn revision_from_data(
-    store: &Store,
+    store: &impl crate::store_types::Repository,
     data: DataResponse,
     bytes: &[u8],
     url: &str,
@@ -675,12 +698,14 @@ pub struct CacheImportReport {
 }
 
 #[derive(Serialize)]
+#[cfg(not(target_arch = "wasm32"))]
 struct ArchivedObservation {
     source_digest: String,
     previously_recorded_at: DateTime<Utc>,
     reobserved_at: DateTime<Utc>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn import_cache(
     store: &Store,
     archive: &Store,
@@ -727,6 +752,7 @@ pub fn import_cache(
     Ok(report)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn sync_law(
     store: &Store,
     fetcher: &mut Fetcher,
@@ -869,7 +895,10 @@ pub struct ImportRevision {
     pub observed_at: DateTime<Utc>,
 }
 
-pub fn import_bundle(store: &Store, bytes: &[u8]) -> anyhow::Result<SyncReport> {
+pub fn import_bundle(
+    store: &impl crate::store_types::Repository,
+    bytes: &[u8],
+) -> anyhow::Result<SyncReport> {
     let bundle: Vec<ImportRevision> = serde_json::from_slice(bytes)?;
     let mut report = SyncReport::default();
     for item in bundle {

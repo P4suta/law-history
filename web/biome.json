@@ -4,9 +4,11 @@
     "includes": [
       "**",
       "!src/api.generated.ts",
+      "!src/wasm",
       "!openapi.json",
       "!package-lock.json",
       "!dist",
+      "!dist-pages",
       "!node_modules",
       "!test-results",
       "!playwright-report"

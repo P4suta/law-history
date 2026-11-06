@@ -1,3 +1,4 @@
+use super::mutation_capacity::{self, MAXIMUM_WORKERS as MAXIMUM_MUTATION_WORKERS};
 use super::{
     Captured, EvidenceMethod, bounded_output, emit_completed_evidence, image, native_log,
     snapshot_sources, source_inventory,
@@ -12,7 +13,6 @@ use std::{collections::BTreeSet, fs, path::Path, process::Command};
 const MUTANTS_VERSION: &str = "27.1.0";
 const MUTANT_TEST_TIMEOUT_SECONDS: &str = "60";
 const MUTANT_BUILD_TIMEOUT_SECONDS: &str = "300";
-const MAXIMUM_MUTATION_WORKERS: usize = 6;
 const BUILD_AND_TEST_PHASES: usize = 2;
 const CARGO_FAILURE_EXIT: i32 = 101;
 const CONTAINER_MEMORY_MIB: u32 = 2048;
@@ -218,12 +218,9 @@ fn selected(
         }
         Scope::Runtime => {
             command.args([
-                "--package",
-                "law-domain",
-                "--package",
-                "law-history",
-                "--package",
-                "law-history-cli",
+                "--workspace",
+                "--exclude",
+                "crates/xtask/**",
                 "--test-workspace",
                 "true",
             ]);
@@ -341,7 +338,7 @@ fn validate_native_logs(directory: &Path, report: &Report) -> anyhow::Result<()>
     Ok(())
 }
 
-fn process(root: &Path, image: &str, name: &str) -> Command {
+fn sandbox(name: &str) -> Command {
     let mut command = Command::new("docker");
     command.args([
         "run",
@@ -362,10 +359,6 @@ fn process(root: &Path, image: &str, name: &str) -> Command {
         &format!("/scratch:rw,nosuid,nodev,size={SCRATCH_MEMORY_MIB}m"),
         "--env",
         "TMPDIR=/scratch",
-        "--mount",
-        &format!("type=bind,source={},target=/work,readonly", root.display()),
-        "--workdir",
-        "/work",
         "--env",
         "CARGO_BUILD_JOBS=2",
         "--env",
@@ -378,6 +371,17 @@ fn process(root: &Path, image: &str, name: &str) -> Command {
         "type=volume,target=/tmp/law-history-verification,volume-driver=local,volume-nocopy",
         "--env",
         "CARGO_TARGET_DIR=/tmp/law-history-verification",
+    ]);
+    command
+}
+
+fn process(root: &Path, image: &str, name: &str) -> Command {
+    let mut command = sandbox(name);
+    command.args([
+        "--mount",
+        &format!("type=bind,source={},target=/work,readonly", root.display()),
+        "--workdir",
+        "/work",
         image,
         "cargo",
         "mutants",
@@ -393,6 +397,47 @@ fn process(root: &Path, image: &str, name: &str) -> Command {
     command
 }
 
+fn workspace_baseline(
+    root: &Path,
+    snapshot: &tempfile::TempDir,
+    image: &str,
+    execute: impl FnOnce(&mut Command, &str) -> anyhow::Result<Captured>,
+) -> anyhow::Result<()> {
+    let sequence = RUN_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let name = format!(
+        "law-history-mutation-baseline-{}-{sequence}",
+        std::process::id()
+    );
+    let mut command = sandbox(&name);
+    command.args([
+        "--mount",
+        &format!(
+            "type=bind,source={},target=/work",
+            snapshot.path().display()
+        ),
+        "--workdir",
+        "/work",
+        image,
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked",
+        "--",
+        "--test-threads=1",
+    ]);
+    let result = execute(&mut command, &name).context("Unmutated workspace baseline failed")?;
+    let directory = root.join("verification/results");
+    fs::create_dir_all(&directory)?;
+    let log = directory.join(format!("{name}.log"));
+    fs::write(&log, format!("{}\n{}", result.stdout, result.stderr))?;
+    require_success(&result).context("Unmutated workspace baseline failed")?;
+    eprintln!(
+        "Unmutated workspace baseline passed; native log: {}",
+        log.display()
+    );
+    Ok(())
+}
+
 fn require_success(result: &Captured) -> anyhow::Result<()> {
     if result.timed_out || result.memory_exceeded || result.code != Some(0) {
         bail!(
@@ -404,6 +449,23 @@ fn require_success(result: &Captured) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn require_workers(available: std::io::Result<u64>, requested: usize) -> anyhow::Result<usize> {
+    let available = available.context("Cannot measure available verification storage")?;
+    let workers = mutation_capacity::workers(available, requested);
+    if workers == 0 {
+        bail!(
+            "Insufficient free verification storage: {available} bytes available; leave {} bytes plus {} per worker",
+            mutation_capacity::RESERVE_BYTES,
+            mutation_capacity::WORKER_BYTES
+        );
+    }
+    Ok(workers)
+}
+
+fn discovered_workers(root: &Path, requested: usize) -> anyhow::Result<usize> {
+    require_workers(fs2::available_space(root), requested)
+}
+
 pub fn campaign(
     root: &Path,
     supplied: Option<String>,
@@ -413,6 +475,9 @@ pub fn campaign(
     shard: Option<String>,
     list: bool,
 ) -> anyhow::Result<()> {
+    if !list {
+        discovered_workers(root, 1)?;
+    }
     let image = image(root, supplied)?;
     let sources = source_inventory(root, true, "crates/law-domain/src/lib.rs")?;
     let source_hash = law_history::store::sha256(&serde_json::to_vec(&sources)?);
@@ -453,7 +518,7 @@ pub fn campaign(
         "inventory_only":list,"native_report":format!("{run_name}/mutants.out/outcomes.json"),
         "limits":{"memory_mib":CONTAINER_MEMORY_MIB,"cpus":CONTAINER_CPUS,"pids":CONTAINER_PIDS,"container_seconds":CONTAINER_TIMEOUT_SECONDS,"test_seconds":TEST_TIMEOUT_SECONDS,"build_seconds":BUILD_TIMEOUT_SECONDS,"scratch_memory_mib":SCRATCH_MEMORY_MIB},
         "tool_version":MUTANTS_VERSION,
-        "build":{"incremental":false,"dev_debug":0,"test_debug":0,"cache":"container-private","storage":"anonymous-local-volume"},
+        "build":{"incremental":false,"dev_debug":0,"test_debug":0,"cache":"container-private","storage":"anonymous-local-volume","wasm_storage":"image-seeded-private-overlay"},
     });
     fs::write(&receipt_path, serde_json::to_vec_pretty(&receipt)?)?;
     if list {
@@ -541,10 +606,23 @@ pub fn suite(root: &Path, options: Options) -> anyhow::Result<()> {
             "Use a nonempty shard inventory, one through six workers, and either one shard selection or a complete suite"
         );
     }
-    if list || shards == 1 {
+    let supplied = if list {
+        supplied
+    } else {
+        discovered_workers(root, 1)?;
+        let image = image(root, supplied)?;
+        let sources = source_inventory(root, true, "crates/law-domain/src/lib.rs")?;
+        let snapshot = snapshot_sources(root, &sources)?;
+        workspace_baseline(root, &snapshot, &image, bounded_output)?;
+        Some(image)
+    };
+    if !super::complete_mutation_inventory::required(list, shard.is_some()) {
         return campaign(root, supplied, scope, file, matching, shard, list);
     }
+    discovered_workers(root, 1)?;
     let image = image(root, supplied)?;
+    let workers = discovered_workers(root, jobs)?;
+    eprintln!("Mutation scheduling: {workers} workers (requested maximum {jobs})");
     let sources = source_inventory(root, true, "crates/law-domain/src/lib.rs")?;
     fs::create_dir_all(root.join("verification/results"))?;
     fs::write(
@@ -552,7 +630,7 @@ pub fn suite(root: &Path, options: Options) -> anyhow::Result<()> {
         serde_json::to_vec_pretty(&serde_json::json!({
             "schema_version":1,"image":image,"source_files":sources,
             "source_sha256":law_history::store::sha256(&serde_json::to_vec(&sources)?),
-            "scope":format!("{scope:?}"),"file":file,"matching":matching,"shards":shards,"jobs":jobs,"complete":false
+            "scope":format!("{scope:?}"),"file":file,"matching":matching,"shards":shards,"jobs":jobs,"workers":workers,"complete":false
         }))?,
     )?;
     let expected: BTreeSet<_> = inventory(
@@ -574,7 +652,7 @@ pub fn suite(root: &Path, options: Options) -> anyhow::Result<()> {
     let next = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
     std::thread::scope(|threads| {
-        for _ in 0..jobs {
+        for _ in 0..workers {
             let image = &image;
             let next = &next;
             let failed = &failed;
@@ -647,7 +725,7 @@ pub fn suite(root: &Path, options: Options) -> anyhow::Result<()> {
         && timeout == 0;
     let record = serde_json::json!({
         "schema_version":1,"image":image,"source_sha256":law_history::store::sha256(&serde_json::to_vec(&sources)?),"source_files":sources,
-        "scope":format!("{scope:?}"),"file":file,"matching":matching,"shards":shards,"jobs":jobs,"complete":complete,
+        "scope":format!("{scope:?}"),"file":file,"matching":matching,"shards":shards,"jobs":jobs,"workers":workers,"complete":complete,
         "expected":expected.len(),"executed":actual.len(),"caught":caught,"missed":missed,"unviable":unviable,"timeout":timeout,
         "source_unchanged":unchanged,"duplicate":duplicate,"incomplete":incomplete,
         "missing":expected.difference(&actual).collect::<Vec<_>>(),"unexpected":actual.difference(&expected).collect::<Vec<_>>(),
@@ -670,7 +748,7 @@ pub fn suite(root: &Path, options: Options) -> anyhow::Result<()> {
         MUTANTS_VERSION,
         &image,
         &format!(
-            "{shards} shards, {jobs} workers; {scope:?}; file={file:?}; matching={matching:?}; every selected native scenario; {CONTAINER_CPUS} CPUs, {CONTAINER_MEMORY_MIB} MiB, {CONTAINER_PIDS} PIDs, {CONTAINER_TIMEOUT_SECONDS} seconds per container; build={BUILD_TIMEOUT_SECONDS}s, test={TEST_TIMEOUT_SECONDS}s; scratch={SCRATCH_MEMORY_MIB} MiB"
+            "{shards} shards, {workers} workers (requested maximum {jobs}); {scope:?}; file={file:?}; matching={matching:?}; every selected native scenario; {CONTAINER_CPUS} CPUs, {CONTAINER_MEMORY_MIB} MiB, {CONTAINER_PIDS} PIDs, {CONTAINER_TIMEOUT_SECONDS} seconds per container; build={BUILD_TIMEOUT_SECONDS}s, test={TEST_TIMEOUT_SECONDS}s; scratch={SCRATCH_MEMORY_MIB} MiB"
         ),
         &[("complete-native-mutation-inventory", actual.len())],
     )?;
@@ -737,6 +815,68 @@ mod tests {
     use super::*;
 
     #[test]
+    fn workspace_baseline_refuses_failed_missing_and_resource_limited_execution() {
+        let root = tempfile::tempdir().unwrap();
+        let snapshot = tempfile::tempdir().unwrap();
+        for (code, timed_out, memory_exceeded) in [
+            (Some(23), false, false),
+            (None, false, false),
+            (Some(0), true, false),
+            (Some(0), false, true),
+        ] {
+            let result = workspace_baseline(root.path(), &snapshot, "image", |command, _| {
+                let arguments: Vec<_> = command.get_args().collect();
+                assert!(arguments.ends_with(&[
+                    std::ffi::OsStr::new("cargo"),
+                    std::ffi::OsStr::new("test"),
+                    std::ffi::OsStr::new("--workspace"),
+                    std::ffi::OsStr::new("--locked"),
+                    std::ffi::OsStr::new("--"),
+                    std::ffi::OsStr::new("--test-threads=1"),
+                ]));
+                assert!(arguments.iter().any(|value| {
+                    value.to_string_lossy()
+                        == format!(
+                            "type=bind,source={},target=/work",
+                            snapshot.path().display()
+                        )
+                }));
+                Ok(Captured {
+                    code,
+                    stdout: String::new(),
+                    stderr: "native execution failure".into(),
+                    timed_out,
+                    memory_exceeded,
+                })
+            });
+            assert!(
+                result
+                    .unwrap_err()
+                    .to_string()
+                    .contains("Unmutated workspace baseline failed")
+            );
+        }
+        let failure = workspace_baseline(root.path(), &snapshot, "image", |_, _| {
+            anyhow::bail!("native executor failure")
+        })
+        .unwrap_err();
+        assert!(format!("{failure:#}").contains("native executor failure"));
+    }
+
+    #[test]
+    fn capacity_discovery_preserves_io_failures_and_refuses_insufficient_space() {
+        assert_eq!(require_workers(Ok(3_221_225_472), 6).unwrap(), 1);
+        assert_eq!(require_workers(Ok(8_589_934_592), 6).unwrap(), 6);
+        assert!(require_workers(Ok(3_221_225_471), 6).is_err());
+        assert!(require_workers(Ok(u64::MAX), 0).is_err());
+        let failure =
+            require_workers(Err(std::io::Error::other("capacity probe failure")), 6).unwrap_err();
+        assert!(format!("{failure:#}").contains("capacity probe failure"));
+        let root = tempfile::tempdir().unwrap();
+        assert!(discovered_workers(&root.path().join("missing"), 1).is_err());
+    }
+
+    #[test]
     fn mutation_build_outputs_use_fresh_linux_local_storage_without_host_cache_mounts() {
         let command = process(Path::new("/source"), "image", "owned");
         let arguments: Vec<_> = command.get_args().collect();
@@ -760,12 +900,9 @@ mod tests {
             (
                 Scope::Runtime,
                 vec![
-                    "--package",
-                    "law-domain",
-                    "--package",
-                    "law-history",
-                    "--package",
-                    "law-history-cli",
+                    "--workspace",
+                    "--exclude",
+                    "crates/xtask/**",
                     "--test-workspace",
                     "true",
                 ],

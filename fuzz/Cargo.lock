@@ -689,6 +689,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "law-browser"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "law-domain",
+ "law-history",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "law-domain"
 version = "0.1.0"
 
@@ -720,6 +732,7 @@ dependencies = [
 name = "law-history-fuzz"
 version = "0.1.0"
 dependencies = [
+ "law-browser",
  "law-history",
  "libfuzzer-sys",
  "serde_json",
