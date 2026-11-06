@@ -22,7 +22,7 @@ jobs:
       - name: Install pinned tools
         uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db
         with:
-          version: 2026.10.24
+          version: 2026.11.2
       - name: Install Web dependencies
         run: mise x -- npm ci --prefix web --ignore-scripts
       - name: Install Chromium
