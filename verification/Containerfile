@@ -1,0 +1,16 @@
+FROM rust:1.99.0-trixie@sha256:81015672d6939b0265f09adf96d5de125482bb1330106076956b0518e74edc90
+ENV CARGO_BUILD_JOBS=2
+RUN cargo install --locked --version 0.68.0 kani-verifier
+RUN cargo kani setup
+RUN cargo install --locked --version 0.13.2 cargo-fuzz
+RUN cargo install --locked --version 27.1.0 cargo-mutants
+RUN rustup toolchain install nightly-2026-10-01 --profile minimal
+WORKDIR /work
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY crates ./crates
+COPY fixtures ./fixtures
+COPY fuzz ./fuzz
+RUN cargo fetch --locked
+RUN cargo +nightly-2026-10-01 fetch --manifest-path fuzz/Cargo.toml
+ENV CARGO_NET_OFFLINE=true
+ENV CARGO_TARGET_DIR=/tmp/law-history-verification

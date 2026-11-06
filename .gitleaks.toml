@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''(^|/)(\.git|target|node_modules|dist|test-results|playwright-report|\.law-history|fuzz/generated|fuzz/artifacts|verification/results)(/|$)''',
+]

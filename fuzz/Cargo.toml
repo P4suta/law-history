@@ -1,0 +1,55 @@
+[package]
+name = "law-history-fuzz"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[lints.clippy]
+match_same_arms = "warn"
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+law-history = { path = "../crates/law-history" }
+serde_json = "1.0.145"
+
+[[bin]]
+name = "law_xml"
+path = "fuzz_targets/law_xml.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "legal_day"
+path = "fuzz_targets/legal_day.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "amendment_text"
+path = "fuzz_targets/amendment_text.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "reference_resolution"
+path = "fuzz_targets/reference_resolution.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "object_codec"
+path = "fuzz_targets/object_codec.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]

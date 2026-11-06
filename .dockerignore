@@ -1,0 +1,16 @@
+.git
+.law-history
+.law-history-demo
+.law-history-time-unverified
+.env
+.env.*
+.DS_Store
+target
+web/node_modules
+web/dist
+web/test-results
+web/playwright-report
+verification/results
+fuzz/target
+fuzz/artifacts
+fuzz/generated

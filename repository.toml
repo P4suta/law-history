@@ -1,0 +1,7 @@
+name = "law-history"
+summary = "Preserve and compare Japanese legislation across enforcement and observation time"
+install = "mise trust\nmise install\nmise x -- npm ci --prefix web --ignore-scripts\nmise x -- npm exec --prefix web -- playwright install --with-deps chromium"
+usage = "mise x -- cargo run --package law-history-cli -- --store .law-history-demo sync --import fixtures/demo.json\nmise x -- npm run --prefix web build\nmise x -- cargo run --package law-history-cli -- --store .law-history-demo serve"
+documentation_index = true
+copyright = "Yasunobu"
+license = "MIT OR Apache-2.0"

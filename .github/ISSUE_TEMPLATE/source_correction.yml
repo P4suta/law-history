@@ -1,0 +1,29 @@
+name: Source correction
+description: Report missing, conflicting, or incorrectly interpreted source evidence.
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Public source URL
+      description: Link to the official source supporting the correction.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Law and revision identifiers
+      description: Include the law identifier, revision address, and relevant enforcement or observation time.
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observed result
+      description: Include the Git commit, query or collection command, and actual diagnostics.
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Expected interpretation
+      description: Explain the correction supported by the source and distinguish any unresolved interpretation.
+    validations:
+      required: true

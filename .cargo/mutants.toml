@@ -1,0 +1,3 @@
+additional_cargo_args = ["--locked", "--message-format=json"]
+additional_cargo_test_args = ["--", "--test-threads=1"]
+exclude_globs = ["crates/law-domain/src/proofs.rs"]

@@ -1,0 +1,10 @@
+<Law>
+  <LawBody>
+    <MainProvision><Article Num="1"><Sentence>Article</Sentence></Article></MainProvision>
+    <AppdxStyle Num="1"><AppdxStyleTitle>First style</AppdxStyleTitle></AppdxStyle>
+    <AppdxStyle Num="1"><AppdxStyleTitle>Second style</AppdxStyleTitle></AppdxStyle>
+    <AppdxStyle Num="2"><AppdxStyleTitle>Third style</AppdxStyleTitle></AppdxStyle>
+    <AppdxFormat Num="15"><AppdxFormatTitle>First format</AppdxFormatTitle></AppdxFormat>
+    <AppdxFormat Num="15"><AppdxFormatTitle>Second format</AppdxFormatTitle></AppdxFormat>
+  </LawBody>
+</Law>

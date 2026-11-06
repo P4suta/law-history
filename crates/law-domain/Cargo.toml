@@ -1,0 +1,13 @@
+[package]
+name = "law-domain"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+proof-negative-control = []
+
+[lints]
+workspace = true

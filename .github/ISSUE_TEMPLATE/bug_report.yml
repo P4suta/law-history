@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible app or verification failure.
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: Commit and environment
+      description: Include the Git commit, operating system, and relevant tool versions.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest command, API request, or Web interaction that reproduces the failure.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the expected result and the source or invariant supporting it.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and diagnostics
+      description: Include relevant diagnostics with credentials and private data removed.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Source evidence
+      description: Include relevant public source URLs, law identifiers, revision addresses, and query dates.

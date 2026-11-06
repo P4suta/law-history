@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "captured_date": "2026-11-05",
+  "history_url": "https://laws.e-gov.go.jp/api/2/law_revisions/337AC0000000150",
+  "body_url": "https://laws.e-gov.go.jp/api/2/law_data/337AC0000000150_20251001_504AC0000000104?law_full_text_format=xml",
+  "schema_url": "https://laws.e-gov.go.jp/file/XMLSchemaForJapaneseLaw_v3.xsd",
+  "history_sha256": "44b81febdb62b89471c23d75e05f000f68292087f6044cd8ec4791a2bfe706f9",
+  "body_sha256": "d072a425f9799d5a7fb04f8140e76c677fa179a054ab29512901ede0176af03c",
+  "schema_sha256": "f5e11ddb0d91c26232d6eb49a59001c3f5d418ef34fd2aef3b59223a6f633276",
+  "plain_title": "激甚災害に対処するための特別の財政援助等に関する法律",
+  "inline_title": "激<Ruby>甚<Rt>じん</Rt></Ruby>災害に対処するための特別の財政援助等に関する法律"
+}

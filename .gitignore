@@ -1,0 +1,16 @@
+/target/
+/web/node_modules/
+/web/dist/
+/web/test-results/
+/web/playwright-report/
+/.law-history/
+/.law-history-demo/
+/.law-history-time-unverified/
+/verification/results/
+/fuzz/target/
+/fuzz/artifacts/
+/fuzz/generated/
+/.env
+/.env.*
+!/.env.example
+.DS_Store

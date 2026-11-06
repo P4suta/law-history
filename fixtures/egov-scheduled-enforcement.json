@@ -1,0 +1,10 @@
+{
+  "history_url": "https://laws.e-gov.go.jp/api/2/law_revisions/211AC0000000070",
+  "history_sha256": "ba51db98f706ec7892150f4c0a2e30b46207c68a8f12490e105733bd7dd1d90b",
+  "body_url": "https://laws.e-gov.go.jp/api/2/law_data/211AC0000000070_20290624_508AC0000000051?law_full_text_format=xml",
+  "body_sha256": "0718ea862242331098aebbdff70aa1ca0895f6708d2cc48df1cc51e8df68b883",
+  "revision_id": "211AC0000000070_20290624_508AC0000000051",
+  "scheduled_date": "2029-06-24",
+  "attribution": "e-Gov Law Search, Digital Agency, Government of Japan",
+  "terms_url": "https://laws.e-gov.go.jp/terms"
+}

@@ -1,0 +1,2152 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "law-history",
+    "description": "",
+    "license": {
+      "name": "MIT OR Apache-2.0",
+      "identifier": "MIT OR Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/amendments/parse": {
+      "post": {
+        "tags": [],
+        "operationId": "parse_amendment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmendmentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedAmendment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diff": {
+      "get": {
+        "tags": [],
+        "operationId": "diff",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Diff"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/impact": {
+      "get": {
+        "tags": [],
+        "operationId": "impact",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Day"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Impact"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/laws/{law_id}": {
+      "get": {
+        "tags": [],
+        "operationId": "show",
+        "parameters": [
+          {
+            "name": "law_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Day"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Selection"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/laws/{law_id}/blame": {
+      "get": {
+        "tags": [],
+        "operationId": "blame",
+        "parameters": [
+          {
+            "name": "law_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Day"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlameEntry"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/laws/{law_id}/log": {
+      "get": {
+        "tags": [],
+        "operationId": "log",
+        "parameters": [
+          {
+            "name": "law_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoredRevision"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/laws/{law_id}/parliament": {
+      "get": {
+        "tags": [],
+        "operationId": "parliament",
+        "parameters": [
+          {
+            "name": "law_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParliamentaryContext"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/laws/{law_id}/refs": {
+      "get": {
+        "tags": [],
+        "operationId": "refs",
+        "parameters": [
+          {
+            "name": "law_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Day"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios": {
+      "post": {
+        "tags": [],
+        "operationId": "save",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scenario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedScenario"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scenarios/{id}": {
+      "get": {
+        "tags": [],
+        "operationId": "scenario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scenario"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "tags": [],
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Day"
+            }
+          },
+          {
+            "name": "known_at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/simulate": {
+      "post": {
+        "tags": [],
+        "operationId": "simulate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scenario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Simulation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": [],
+        "operationId": "status",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Adjustment": {
+        "type": "object",
+        "required": [
+          "target_step",
+          "expected_operations_sha256",
+          "replacement"
+        ],
+        "properties": {
+          "expected_operations_sha256": {
+            "type": "string"
+          },
+          "replacement": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcedOperation"
+            }
+          },
+          "target_step": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AmendmentInput": {
+        "type": "object",
+        "required": [
+          "law_id",
+          "base_version",
+          "text",
+          "source_url"
+        ],
+        "properties": {
+          "base_version": {
+            "type": "string"
+          },
+          "law_id": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AmendmentStep": {
+        "type": "object",
+        "required": [
+          "id",
+          "effective"
+        ],
+        "properties": {
+          "adjustments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Adjustment"
+            }
+          },
+          "after": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "effective": {
+            "$ref": "#/components/schemas/LegalDate"
+          },
+          "id": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcedOperation"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Bill": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "id",
+          "title",
+          "enacted_law_ids",
+          "submitters",
+          "reason",
+          "speeches",
+          "source"
+        ],
+        "properties": {
+          "enacted_law_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/BillId"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "source": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speeches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpeechLink"
+            }
+          },
+          "submitters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BillId": {
+        "type": "object",
+        "required": [
+          "house",
+          "kind",
+          "session",
+          "number"
+        ],
+        "properties": {
+          "house": {
+            "$ref": "#/components/schemas/House"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BillKind"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "BillKind": {
+        "type": "string",
+        "enum": [
+          "cabinet",
+          "representatives",
+          "councillors",
+          "budget",
+          "treaty",
+          "approval",
+          "consent",
+          "accounts",
+          "resolution",
+          "rules",
+          "regulations"
+        ]
+      },
+      "BlameEntry": {
+        "type": "object",
+        "required": [
+          "path",
+          "version",
+          "source",
+          "diagnostics"
+        ],
+        "properties": {
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "path": {
+            "type": "string"
+          },
+          "previous_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Catalog": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "collected_at",
+          "source_url",
+          "reported_count",
+          "law_ids",
+          "complete"
+        ],
+        "properties": {
+          "collected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "law_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reported_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      },
+      "Change": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "after": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LocatedElement"
+              }
+            ]
+          },
+          "before": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LocatedElement"
+              }
+            ]
+          },
+          "evidence": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Provenance"
+              }
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChangeKind"
+          }
+        }
+      },
+      "ChangeKind": {
+        "type": "string",
+        "enum": [
+          "added",
+          "removed",
+          "changed",
+          "moved",
+          "renumbered"
+        ]
+      },
+      "Confidence": {
+        "type": "string",
+        "enum": [
+          "official",
+          "reconstructed",
+          "inferred",
+          "synthetic"
+        ]
+      },
+      "Content": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "value",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ]
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "value",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "element"
+                ]
+              },
+              "value": {
+                "$ref": "#/components/schemas/Element"
+              }
+            }
+          }
+        ]
+      },
+      "Coverage": {
+        "type": "object",
+        "required": [
+          "law_id",
+          "stored_revisions",
+          "enactment_known",
+          "all_available_stored",
+          "diagnostics"
+        ],
+        "properties": {
+          "all_available_stored": {
+            "type": "boolean"
+          },
+          "available_revisions": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "earliest_known": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Day"
+              }
+            ]
+          },
+          "enactment_known": {
+            "type": "boolean"
+          },
+          "last_collected": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "law_id": {
+            "type": "string"
+          },
+          "stored_revisions": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Day": {
+        "type": "string",
+        "example": "1969-12-31"
+      },
+      "Diagnostic": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "source",
+          "locator"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/DiagnosticCode"
+          },
+          "locator": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "DiagnosticCode": {
+        "type": "string",
+        "enum": [
+          "unknown_date",
+          "ambiguous_order",
+          "missing_source",
+          "unsupported_syntax",
+          "wrong_base",
+          "original_mismatch",
+          "conflict",
+          "official_mismatch",
+          "unresolved_reference",
+          "coverage_gap",
+          "invalid_input"
+        ]
+      },
+      "Diff": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "changes",
+          "diagnostics"
+        ],
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        }
+      },
+      "Element": {
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Content"
+            }
+          },
+          "tag": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorBody": {
+        "type": "object",
+        "required": [
+          "error",
+          "diagnostics"
+        ],
+        "properties": {
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "House": {
+        "type": "string",
+        "enum": [
+          "representatives",
+          "councillors"
+        ]
+      },
+      "Impact": {
+        "type": "object",
+        "required": [
+          "context_versions",
+          "direct",
+          "review",
+          "broken",
+          "diagnostics"
+        ],
+        "properties": {
+          "broken": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            }
+          },
+          "context_versions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "direct": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Position"
+            }
+          },
+          "review": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewPath"
+            }
+          }
+        }
+      },
+      "LegalDate": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "date",
+              "original",
+              "basis",
+              "kind"
+            ],
+            "properties": {
+              "basis": {
+                "type": "string"
+              },
+              "date": {
+                "$ref": "#/components/schemas/Day"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "known"
+                ]
+              },
+              "original": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "original",
+              "reason",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "uncertain"
+                ]
+              },
+              "original": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "LocatedElement": {
+        "type": "object",
+        "required": [
+          "path",
+          "element"
+        ],
+        "properties": {
+          "element": {
+            "$ref": "#/components/schemas/Element"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "Operation": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "path",
+              "old",
+              "new",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "replace_text"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "new": {
+                "type": "string"
+              },
+              "old": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "path",
+              "expected",
+              "replacement",
+              "kind"
+            ],
+            "properties": {
+              "expected": {
+                "$ref": "#/components/schemas/Element"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "replace"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "replacement": {
+                "$ref": "#/components/schemas/Element"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "parent",
+              "element",
+              "kind"
+            ],
+            "properties": {
+              "before": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "element": {
+                "$ref": "#/components/schemas/Element"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "insert"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "parent": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "path",
+              "expected",
+              "kind"
+            ],
+            "properties": {
+              "expected": {
+                "$ref": "#/components/schemas/Element"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "delete"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "path",
+              "expected",
+              "parent",
+              "kind"
+            ],
+            "properties": {
+              "before": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expected": {
+                "$ref": "#/components/schemas/Element"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "move"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "parent": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "path",
+              "from",
+              "to",
+              "title",
+              "kind"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "renumber"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "law_id",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "repeal"
+                ]
+              },
+              "law_id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "ParliamentaryContext": {
+        "type": "object",
+        "required": [
+          "bills",
+          "speeches"
+        ],
+        "properties": {
+          "bills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Bill"
+            }
+          },
+          "speeches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Speech"
+            }
+          }
+        }
+      },
+      "ParsedAmendment": {
+        "type": "object",
+        "required": [
+          "operations",
+          "diagnostics"
+        ],
+        "properties": {
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcedOperation"
+            }
+          }
+        }
+      },
+      "PinnedReferenceContext": {
+        "type": "object",
+        "required": [
+          "versions",
+          "diagnostics"
+        ],
+        "properties": {
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "versions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Position": {
+        "type": "object",
+        "required": [
+          "law_id",
+          "version",
+          "path"
+        ],
+        "properties": {
+          "law_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Provenance": {
+        "type": "object",
+        "required": [
+          "url",
+          "raw_sha256",
+          "media_type",
+          "attribution",
+          "terms_url",
+          "confidence",
+          "locator"
+        ],
+        "properties": {
+          "attribution": {
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "locator": {
+            "type": "string"
+          },
+          "media_type": {
+            "type": "string"
+          },
+          "raw_sha256": {
+            "type": "string"
+          },
+          "terms_url": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Query": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Day"
+              }
+            ]
+          },
+          "known_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Reference": {
+        "type": "object",
+        "required": [
+          "from",
+          "text",
+          "kind",
+          "confidence",
+          "diagnostics"
+        ],
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "from": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ReferenceKind"
+          },
+          "text": {
+            "type": "string"
+          },
+          "to": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Position"
+              }
+            ]
+          }
+        }
+      },
+      "ReferenceKind": {
+        "type": "string",
+        "enum": [
+          "provision",
+          "definition",
+          "delegation"
+        ]
+      },
+      "ReferenceReport": {
+        "type": "object",
+        "required": [
+          "references",
+          "context_versions",
+          "diagnostics"
+        ],
+        "properties": {
+          "context_versions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "ReviewPath": {
+        "type": "object",
+        "required": [
+          "position",
+          "via"
+        ],
+        "properties": {
+          "position": {
+            "$ref": "#/components/schemas/Position"
+          },
+          "via": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reference"
+            }
+          }
+        }
+      },
+      "Revision": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "law_id",
+          "revision_id",
+          "title",
+          "promulgated",
+          "effective",
+          "kind",
+          "original_enactment",
+          "tree",
+          "source"
+        ],
+        "properties": {
+          "amendment_law_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amendment_promulgated": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LegalDate"
+              }
+            ]
+          },
+          "effective": {
+            "$ref": "#/components/schemas/LegalDate"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RevisionKind"
+          },
+          "law_id": {
+            "type": "string"
+          },
+          "metadata_source": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Provenance"
+              }
+            ]
+          },
+          "original_enactment": {
+            "type": "boolean"
+          },
+          "promulgated": {
+            "$ref": "#/components/schemas/LegalDate"
+          },
+          "repeal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Day"
+              }
+            ]
+          },
+          "revision_id": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "sequence": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "source": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "termination": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Termination"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "tree": {
+            "$ref": "#/components/schemas/Element"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevisionKind": {
+        "type": "string",
+        "enum": [
+          "enactment",
+          "amendment",
+          "correction",
+          "repeal",
+          "consolidated"
+        ]
+      },
+      "SavedScenario": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "Scenario": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "name",
+          "bases",
+          "at",
+          "steps"
+        ],
+        "properties": {
+          "at": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "bases": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "known_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reference_context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PinnedReferenceContext"
+              }
+            ]
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmendmentStep"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SearchHit": {
+        "type": "object",
+        "required": [
+          "law_id",
+          "title",
+          "version",
+          "effective",
+          "coverage"
+        ],
+        "properties": {
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "effective": {
+            "$ref": "#/components/schemas/LegalDate"
+          },
+          "law_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "required": [
+          "hits",
+          "diagnostics"
+        ],
+        "properties": {
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            }
+          }
+        }
+      },
+      "Selection": {
+        "type": "object",
+        "required": [
+          "selected",
+          "coverage",
+          "diagnostics"
+        ],
+        "properties": {
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "selected": {
+            "$ref": "#/components/schemas/StoredRevision"
+          }
+        }
+      },
+      "Simulation": {
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "applied_steps",
+          "results",
+          "diffs",
+          "diagnostics",
+          "impact"
+        ],
+        "properties": {
+          "applied_steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "diffs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diff"
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/Impact"
+          },
+          "results": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Revision"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "scenario_id": {
+            "type": "string"
+          }
+        }
+      },
+      "SourcedOperation": {
+        "type": "object",
+        "required": [
+          "operation",
+          "evidence"
+        ],
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/Operation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Speech": {
+        "type": "object",
+        "required": [
+          "speech_id",
+          "meeting_id",
+          "session",
+          "house",
+          "meeting",
+          "date",
+          "speaker",
+          "text",
+          "url",
+          "source"
+        ],
+        "properties": {
+          "date": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "house": {
+            "type": "string"
+          },
+          "meeting": {
+            "type": "string"
+          },
+          "meeting_id": {
+            "type": "string"
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "source": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "speaker": {
+            "type": "string"
+          },
+          "speech_id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "SpeechLink": {
+        "type": "object",
+        "required": [
+          "speech_id",
+          "confidence",
+          "basis"
+        ],
+        "properties": {
+          "basis": {
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "speech_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Status": {
+        "type": "object",
+        "required": [
+          "laws",
+          "diagnostics"
+        ],
+        "properties": {
+          "catalog": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Catalog"
+              }
+            ]
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            }
+          },
+          "laws": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Coverage"
+            }
+          }
+        }
+      },
+      "StoredRevision": {
+        "type": "object",
+        "required": [
+          "version",
+          "observed_at",
+          "revision"
+        ],
+        "properties": {
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Revision"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Termination": {
+        "type": "object",
+        "required": [
+          "status",
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "$ref": "#/components/schemas/LegalDate"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TerminationStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TerminationStatus": {
+        "type": "string",
+        "enum": [
+          "repealed",
+          "expired",
+          "suspended",
+          "lost_effectiveness"
+        ]
+      }
+    }
+  }
+}

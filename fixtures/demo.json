@@ -1,0 +1,38 @@
+[
+  {
+    "law_id": "DEMO_ACT",
+    "revision_id": "DEMO_ACT_19690401",
+    "title": "Demonstration Act",
+    "promulgated": {"kind": "known", "date": "1969-03-01", "original": "1969-03-01", "basis": "Synthetic fixture"},
+    "effective": {"kind": "known", "date": "1969-04-01", "original": "1969-04-01", "basis": "Synthetic fixture"},
+    "repeal": null,
+    "sequence": 1,
+    "kind": "enactment",
+    "original_enactment": true,
+    "amendment_law_id": null,
+    "xml": "<Law Era=\"Showa\" Year=\"44\"><LawBody><LawTitle>Demonstration Act</LawTitle><MainProvision><Article Num=\"1\"><ArticleTitle>第一条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>申請は書面で行う。</Sentence></ParagraphSentence></Paragraph></Article><Article Num=\"2\"><ArticleTitle>第二条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>第一条の申請は、第三条の規定による。</Sentence></ParagraphSentence></Paragraph></Article><Article Num=\"3\"><ArticleTitle>第三条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>第二条の手続は政令で定める。</Sentence></ParagraphSentence><Item Num=\"1\"><ItemTitle>一</ItemTitle><ItemSentence><Sentence>保存期間は一年とする。</Sentence></ItemSentence></Item></Paragraph></Article></MainProvision><SupplProvision><Paragraph Num=\"1\"><ParagraphSentence><Sentence>この法律は、昭和四十四年四月一日から施行する。</Sentence></ParagraphSentence></Paragraph></SupplProvision><AppdxTable Num=\"1\"><AppdxTableTitle>別表第一</AppdxTableTitle><TableStruct><Table><TableRow><TableColumn><Sentence>申請書</Sentence></TableColumn></TableRow></Table></TableStruct></AppdxTable></LawBody></Law>",
+    "source_url": "urn:law-history:synthetic:enactment",
+    "terms_url": "urn:law-history:synthetic",
+    "attribution": "Synthetic regression fixture; not legislation",
+    "confidence": "synthetic",
+    "observed_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "law_id": "DEMO_ACT",
+    "revision_id": "DEMO_ACT_19700401",
+    "title": "Demonstration Act",
+    "promulgated": {"kind": "known", "date": "1969-03-01", "original": "1969-03-01", "basis": "Synthetic fixture"},
+    "effective": {"kind": "known", "date": "1970-04-01", "original": "1970-04-01", "basis": "Synthetic fixture"},
+    "repeal": null,
+    "sequence": 1,
+    "kind": "amendment",
+    "original_enactment": false,
+    "amendment_law_id": "DEMO_AMENDMENT",
+    "xml": "<Law Era=\"Showa\" Year=\"44\"><LawBody><LawTitle>Demonstration Act</LawTitle><MainProvision><Article Num=\"1\"><ArticleTitle>第一条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>申請は電磁的記録で行う。</Sentence></ParagraphSentence></Paragraph></Article><Article Num=\"2\"><ArticleTitle>第二条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>第一条の申請は、第三条の規定による。</Sentence></ParagraphSentence></Paragraph></Article><Article Num=\"3\"><ArticleTitle>第三条</ArticleTitle><Paragraph Num=\"1\"><ParagraphSentence><Sentence>第二条の手続は政令で定める。</Sentence></ParagraphSentence><Item Num=\"1\"><ItemTitle>一</ItemTitle><ItemSentence><Sentence>保存期間は一年とする。</Sentence></ItemSentence></Item></Paragraph></Article></MainProvision><SupplProvision><Paragraph Num=\"1\"><ParagraphSentence><Sentence>この法律は、昭和四十四年四月一日から施行する。</Sentence></ParagraphSentence></Paragraph></SupplProvision><AppdxTable Num=\"1\"><AppdxTableTitle>別表第一</AppdxTableTitle><TableStruct><Table><TableRow><TableColumn><Sentence>申請書</Sentence></TableColumn></TableRow></Table></TableStruct></AppdxTable></LawBody></Law>",
+    "source_url": "urn:law-history:synthetic:amendment",
+    "terms_url": "urn:law-history:synthetic",
+    "attribution": "Synthetic regression fixture; not legislation",
+    "confidence": "synthetic",
+    "observed_at": "2026-01-02T00:00:00Z"
+  }
+]
