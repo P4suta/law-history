@@ -7,6 +7,10 @@ license.workspace = true
 publish = false
 
 [dependencies]
+fs2 = "=0.4.3"
+law-browser = { path = "../law-browser" }
+axum.workspace = true
+tower-http.workspace = true
 law-history = { path = "../law-history" }
 anyhow.workspace = true
 clap.workspace = true

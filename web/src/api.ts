@@ -1,12 +1,16 @@
 import createClient from "openapi-fetch";
 import { z } from "zod";
 import type { components, paths } from "./api.generated";
+import { browserFetch, browserMode, execute } from "./browser";
 
 export type Model = components["schemas"];
 export type LawElement = Model["Element"];
 export type Scenario = Model["Scenario"];
 
-const client = createClient<paths>({ baseUrl: window.location.origin });
+const client = createClient<paths>({
+  baseUrl: window.location.origin,
+  ...(browserMode ? { fetch: browserFetch } : {}),
+});
 const nullableString = z.string().nullable().default(null);
 const confidence = z.enum(["official", "reconstructed", "inferred", "synthetic"]);
 const date = z.discriminatedUnion("kind", [
@@ -370,6 +374,17 @@ export async function saveScenario(scenario: Scenario): Promise<string> {
     client.POST("/api/scenarios", { body: scenario }),
     z.object({ id: z.string() }),
   );
+  if (browserMode) {
+    const saved = scenarioSchema.parse(
+      await execute({ operation: "load_scenario", id: result.id }),
+    );
+    const fragment = new URLSearchParams({ recipe: JSON.stringify(saved) });
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}#${fragment}`,
+    );
+  }
   return result.id;
 }
 export function loadScenario(id: string, signal: AbortSignal): Promise<Scenario> {
@@ -380,10 +395,14 @@ export function loadScenario(id: string, signal: AbortSignal): Promise<Scenario>
 }
 export function loadParliament(
   law: string,
+  time: Temporal,
   signal: AbortSignal,
 ): Promise<Model["ParliamentaryContext"]> {
   return checked(
-    client.GET("/api/laws/{law_id}/parliament", { params: { path: { law_id: law } }, signal }),
+    client.GET("/api/laws/{law_id}/parliament", {
+      params: { path: { law_id: law }, query: time.known_at ? { known_at: time.known_at } : {} },
+      signal,
+    }),
     parliament,
   );
 }

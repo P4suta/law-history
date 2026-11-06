@@ -2,6 +2,8 @@
 rust = { version = "1.99.1", profile = "minimal", components = [
   "rustfmt",
   "clippy",
+], targets = [
+  "wasm32-unknown-unknown",
 ] }
 node = "26.13.0"
 just = "1.59.0"
@@ -10,6 +12,7 @@ actionlint = "1.7.12"
 zizmor = "1.32.0"
 "cargo:cargo-audit" = "0.22.2"
 "cargo:cargo-mutants" = "27.1.0"
+"cargo:wasm-bindgen-cli" = "0.2.130"
 
 [env]
 CARGO_TARGET_DIR = "{{config_root}}/target"

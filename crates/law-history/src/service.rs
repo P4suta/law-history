@@ -1,21 +1,19 @@
 use crate::{
-    Store,
     amendment::{self, Scenario, Simulation},
     ingest::{Catalog, LawInventory, SyncReport},
     model::*,
     parliament::{Bill, Speech},
     references::{self, Impact, Position, ReferenceReport},
     store::{IndexedRevision, TemporalMetadata, sha256},
+    store_types::Repository as Store,
     xml,
 };
 use chrono::{DateTime, Utc};
 use law_domain::{EffectiveState, effective_state};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
-    path::Path,
-};
+use std::collections::{BTreeMap, BTreeSet};
+#[cfg(not(target_arch = "wasm32"))]
+use std::{fs, path::Path};
 use utoipa::ToSchema;
 
 struct CanonicalHistory {
@@ -58,7 +56,11 @@ fn latest_observations(mut history: Vec<IndexedRevision>) -> CanonicalHistory {
     }
 }
 
-pub fn coverage(store: &Store, law_id: &str, known_at: Option<DateTime<Utc>>) -> Result<Coverage> {
+pub fn coverage(
+    store: &impl Store,
+    law_id: &str,
+    known_at: Option<DateTime<Utc>>,
+) -> Result<Coverage> {
     let history = store.indexed_history(law_id, known_at)?;
     let inventory: Option<LawInventory> =
         store.latest_fact(&format!("inventory:{law_id}"), known_at)?;
@@ -100,7 +102,7 @@ pub fn coverage(store: &Store, law_id: &str, known_at: Option<DateTime<Utc>>) ->
     Ok(result)
 }
 
-fn load_indexed(store: &Store, indexed: IndexedRevision) -> Result<StoredRevision> {
+fn load_indexed(store: &impl Store, indexed: IndexedRevision) -> Result<StoredRevision> {
     let revision = store.version(&indexed.version)?;
     if TemporalMetadata::from(&revision) != indexed.metadata {
         return Err(HistoryError::Invalid(
@@ -115,7 +117,7 @@ fn load_indexed(store: &Store, indexed: IndexedRevision) -> Result<StoredRevisio
     })
 }
 
-pub fn select(store: &Store, law_id: &str, query: &Query, today: Day) -> Result<Selection> {
+pub fn select(store: &impl Store, law_id: &str, query: &Query, today: Day) -> Result<Selection> {
     validate_id(law_id).map_err(HistoryError::Invalid)?;
     let history = store.indexed_history(law_id, query.known_at)?;
     if let Some(version) = &query.version {
@@ -281,7 +283,7 @@ fn termination_date_diagnostic(revision: &Revision) -> Option<Diagnostic> {
 }
 
 fn current_candidate(
-    store: &Store,
+    store: &impl Store,
     law: &str,
     known_at: Option<DateTime<Utc>>,
     at: Day,
@@ -322,7 +324,7 @@ fn current_candidate(
     .then_some(current))
 }
 
-pub fn search(store: &Store, text: &str, query: &Query, today: Day) -> Result<SearchResponse> {
+pub fn search(store: &impl Store, text: &str, query: &Query, today: Day) -> Result<SearchResponse> {
     let mut hits = Vec::new();
     let mut diagnostics = Vec::new();
     for law_id in store.law_ids()? {
@@ -351,7 +353,7 @@ pub fn search(store: &Store, text: &str, query: &Query, today: Day) -> Result<Se
     Ok(SearchResponse { hits, diagnostics })
 }
 
-pub fn diff(store: &Store, from: &str, to: &str) -> Result<Diff> {
+pub fn diff(store: &impl Store, from: &str, to: &str) -> Result<Diff> {
     let first = store.version(from)?;
     let second = store.version(to)?;
     if first.law_id != second.law_id {
@@ -381,7 +383,7 @@ impl ReferenceContext {
     }
 }
 
-fn corpus(store: &Store, query: &Query, today: Day) -> Result<ReferenceContext> {
+fn corpus(store: &impl Store, query: &Query, today: Day) -> Result<ReferenceContext> {
     let mut selected = BTreeMap::new();
     let mut diagnostics = Vec::new();
     for law in store.law_ids()? {
@@ -405,7 +407,7 @@ fn corpus(store: &Store, query: &Query, today: Day) -> Result<ReferenceContext> 
     })
 }
 
-pub fn refs(store: &Store, law: &str, query: &Query, today: Day) -> Result<ReferenceReport> {
+pub fn refs(store: &impl Store, law: &str, query: &Query, today: Day) -> Result<ReferenceReport> {
     let mut corpus = corpus(store, query, today)?;
     if query.version.is_some() {
         let selected = select(store, law, query, today)?;
@@ -427,7 +429,13 @@ pub fn refs(store: &Store, law: &str, query: &Query, today: Day) -> Result<Refer
     })
 }
 
-pub fn impact(store: &Store, from: &str, to: &str, query: &Query, today: Day) -> Result<Impact> {
+pub fn impact(
+    store: &impl Store,
+    from: &str,
+    to: &str,
+    query: &Query,
+    today: Day,
+) -> Result<Impact> {
     let revision = store.version(from)?;
     let diff = diff(store, from, to)?;
     let mut corpus = corpus(store, query, today)?;
@@ -477,7 +485,7 @@ pub struct BlameEntry {
 }
 
 pub fn blame(
-    store: &Store,
+    store: &impl Store,
     law: &str,
     path: &str,
     query: &Query,
@@ -566,7 +574,7 @@ pub fn blame(
     })
 }
 
-pub fn simulate(store: &Store, scenario: &Scenario) -> Result<Simulation> {
+pub fn simulate(store: &impl Store, scenario: &Scenario) -> Result<Simulation> {
     let mut bases = BTreeMap::new();
     for (law, version) in &scenario.bases {
         if let Some(cutoff) = scenario.known_at
@@ -657,7 +665,7 @@ pub fn simulate(store: &Store, scenario: &Scenario) -> Result<Simulation> {
     Ok(result)
 }
 
-fn scenario_context(store: &Store, scenario: &Scenario) -> Result<ReferenceContext> {
+fn scenario_context(store: &impl Store, scenario: &Scenario) -> Result<ReferenceContext> {
     match &scenario.reference_context {
         Some(pinned) => {
             let mut revisions = BTreeMap::new();
@@ -696,7 +704,11 @@ fn scenario_context(store: &Store, scenario: &Scenario) -> Result<ReferenceConte
     }
 }
 
-pub fn save_scenario(store: &Store, scenario: &Scenario, now: DateTime<Utc>) -> Result<String> {
+pub fn save_scenario(
+    store: &impl Store,
+    scenario: &Scenario,
+    now: DateTime<Utc>,
+) -> Result<String> {
     let mut fixed = scenario.clone();
     fixed.known_at.get_or_insert(now);
     if fixed.reference_context.is_none() {
@@ -725,7 +737,7 @@ pub struct Status {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-pub fn status(store: &Store, known_at: Option<DateTime<Utc>>) -> Result<Status> {
+pub fn status(store: &impl Store, known_at: Option<DateTime<Utc>>) -> Result<Status> {
     let comparisons = store.facts_with_prefix::<crate::reconstruction::ComparisonResult>(
         "comparison-result:",
         known_at,
@@ -751,7 +763,7 @@ pub struct ParliamentaryContext {
 }
 
 pub fn parliament(
-    store: &Store,
+    store: &impl Store,
     law: &str,
     known_at: Option<DateTime<Utc>>,
 ) -> Result<ParliamentaryContext> {
@@ -772,8 +784,9 @@ pub fn parliament(
     Ok(ParliamentaryContext { bills, speeches })
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn export_snapshot(
-    store: &Store,
+    store: &impl Store,
     directory: &Path,
     laws: &[String],
     query: &Query,

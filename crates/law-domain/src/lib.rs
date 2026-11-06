@@ -14,6 +14,14 @@ const LEAP_FEBRUARY_DAYS: u8 = 29;
 const COMMON_MONTH_DAYS: [u8; 12] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const DECIMAL_RADIX: u32 = 10;
 
+pub const fn input_fits(size: usize, limit: usize) -> bool {
+    size <= limit
+}
+
+pub const fn knowledge_cutoff_accepts(order: core::cmp::Ordering) -> bool {
+    !matches!(order, core::cmp::Ordering::Greater)
+}
+
 pub const fn revision_has_changes(content: bool, repeal: bool, enforcement: bool) -> bool {
     content || repeal || enforcement
 }
@@ -405,6 +413,14 @@ mod proof_image_reference;
 
 #[cfg(kani)]
 mod proofs;
+
+#[cfg(any(test, kani))]
+#[path = "../../xtask/src/complete_mutation_inventory.rs"]
+mod proof_complete_mutation_inventory;
+
+#[cfg(any(test, kani))]
+#[path = "../../xtask/src/mutation_capacity.rs"]
+mod proof_mutation_capacity;
 
 #[cfg(any(test, kani))]
 #[path = "../../xtask/src/cover_evidence.rs"]

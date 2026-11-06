@@ -3,6 +3,10 @@
   "verifier": "Kani 0.68.0",
   "negative_control": "proofs::false_claim_that_an_applicable_patch_has_the_wrong_base",
   "harnesses": [
+    "proofs::mutation_capacity_preserves_headroom_and_selects_the_largest_allowed_worker_count",
+    "proofs::mutation_evidence_requires_complete_selection_including_a_single_shard",
+    "proofs::input_limits_admit_the_boundary_and_refuse_every_larger_size",
+    "proofs::knowledge_cutoffs_include_equal_observations",
     "proofs::image_digests_require_exactly_64_lowercase_hex_digits_within_65_bytes",
     "proofs::native_log_limits_check_every_machine_size_length",
     "proofs::inline_title_attributes_require_each_independent_condition",
@@ -40,6 +44,10 @@
     "proofs::replacement_length_rejects_overflow_and_limit_excess"
   ],
   "required_covers": {
+    "proofs::mutation_capacity_preserves_headroom_and_selects_the_largest_allowed_worker_count": 5,
+    "proofs::mutation_evidence_requires_complete_selection_including_a_single_shard": 4,
+    "proofs::input_limits_admit_the_boundary_and_refuse_every_larger_size": 3,
+    "proofs::knowledge_cutoffs_include_equal_observations": 3,
     "proofs::image_digests_require_exactly_64_lowercase_hex_digits_within_65_bytes": 3,
     "proofs::native_log_limits_check_every_machine_size_length": 4,
     "proofs::inline_title_attributes_require_each_independent_condition": 8,
@@ -50,6 +58,6 @@
     "proofs::provision_context_admits_exact_parent_roles_and_never_reenters_after_exclusion": 2
   },
   "source": "crates/law-domain/src/lib.rs",
-  "assumptions": "Gregorian calendar constructor over all u16/u8/u8 components; ordering, effectivity, and current-snapshot eligibility over arbitrary valid calendar days in years 1 through 9999; every provision context and element role generated from the production enum types with exact parent transitions and an absorbing excluded context; every ruby context and element role generated from the production enum types with all nine transitions and an absorbing reading context; all eight independent content, repeal, and enforcement change combinations for revision identity; all eight independent inline-title attribute position, name, and value eligibility combinations; native mutation-log length admission over every usize with an inclusive 8 MiB bound; all enforcement-date presence and scheduled-value equality combinations, evidence-presence and equality combinations, and every Boolean termination claim paired with absent, uncertain, or known date evidence; cover completeness over arbitrary optional machine-size reached, total, and required counts; decimal digit recognition over every char and checked decimal accumulation over every u32/u8 pair; all boolean patch, structural classification, observation arbitration, and CLI error-channel combinations; schema names and number address eligibility over arbitrary byte sequences of length zero through four with unwind bound 8; matching decisions over arbitrary machine-size needle lengths, optional first positions, and repetition flags supplied by Rust string search; replacement planning and size arithmetic over arbitrary usize inputs; seven concrete UTF-8 cases with unwind bound 16; string search semantics are checked separately by exhaustive bounded native differential tests and fuzzing; image digest validation over arbitrary byte sequences of zero through 65 bytes with unwind bound 67 and three required witnesses",
-  "semantic_boundaries": "Calendar conversion, Japanese legal meaning, reference interpretation, and source completeness require independent source comparisons and regressions"
+  "assumptions": "Inclusive input limits over all usize size and limit pairs; observation visibility over all three timestamp comparison results; Gregorian calendar constructor over all u16/u8/u8 components; ordering, effectivity, and current-snapshot eligibility over arbitrary valid calendar days in years 1 through 9999; every provision context and element role generated from the production enum types with exact parent transitions and an absorbing excluded context; every ruby context and element role generated from the production enum types with all nine transitions and an absorbing reading context; all eight independent content, repeal, and enforcement change combinations for revision identity; all eight independent inline-title attribute position, name, and value eligibility combinations; native mutation-log length admission over every usize with an inclusive 8 MiB bound; all enforcement-date presence and scheduled-value equality combinations, evidence-presence and equality combinations, and every Boolean termination claim paired with absent, uncertain, or known date evidence; cover completeness over arbitrary optional machine-size reached, total, and required counts; decimal digit recognition over every char and checked decimal accumulation over every u32/u8 pair; all boolean patch, structural classification, observation arbitration, and CLI error-channel combinations; schema names and number address eligibility over arbitrary byte sequences of length zero through four with unwind bound 8; matching decisions over arbitrary machine-size needle lengths, optional first positions, and repetition flags supplied by Rust string search; replacement planning and size arithmetic over arbitrary usize inputs; seven concrete UTF-8 cases with unwind bound 16; string search semantics are checked separately by exhaustive bounded native differential tests and fuzzing; image digest validation over arbitrary byte sequences of zero through 65 bytes with unwind bound 67 and three required witnesses",
+  "semantic_boundaries": "Storage scheduling proves arithmetic over the supplied available-byte measurement and requested concurrency, not an exclusive reservation against other writers; calendar conversion, Japanese legal meaning, reference interpretation, and source completeness require independent source comparisons and regressions"
 }

@@ -4,8 +4,9 @@ default:
 check:
     cargo xtask check
 
+[positional-arguments]
 release-check corpus:
-    cargo xtask release-check --corpus {{ corpus }}
+    cargo xtask release-check --corpus "$@"
 
 schema:
     cargo xtask schema
@@ -16,8 +17,17 @@ proofs:
 fuzz:
     cargo xtask fuzz
 
+[positional-arguments]
 mutations *args:
-    cargo xtask mutations {{ args }}
+    cargo xtask mutations "$@"
+
+alias mutants := mutations
+
+model:
+    cargo xtask browser-model
+
+pages:
+    cargo xtask build-browser
 
 audit:
     cargo xtask audit

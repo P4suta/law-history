@@ -2,6 +2,67 @@ use super::proof_native_log as native_log;
 use super::*;
 
 #[kani::proof]
+fn mutation_capacity_preserves_headroom_and_selects_the_largest_allowed_worker_count() {
+    let available: u64 = kani::any();
+    let requested: usize = kani::any();
+    let workers = proof_mutation_capacity::workers(available, requested);
+    assert_eq!(proof_mutation_capacity::MAXIMUM_WORKERS, 6);
+    assert_eq!(proof_mutation_capacity::RESERVE_BYTES, 2_147_483_648);
+    assert_eq!(proof_mutation_capacity::WORKER_BYTES, 1_073_741_824);
+    assert!(workers <= requested && workers <= 6);
+    if workers > 0 {
+        assert!(available >= 2_147_483_648 + workers as u64 * 1_073_741_824);
+    }
+    if workers < requested && workers < 6 {
+        assert!(available < 2_147_483_648 + (workers as u64 + 1) * 1_073_741_824);
+    }
+    kani::cover!(workers == 0 && requested == 0);
+    kani::cover!(workers == 0 && requested > 0);
+    kani::cover!(workers == 1 && available == 3_221_225_472 && requested == 6);
+    kani::cover!(workers == 6 && requested > 6);
+    kani::cover!(workers == 2 && requested == 2 && available > 8_589_934_592);
+}
+
+#[kani::proof]
+fn mutation_evidence_requires_complete_selection_including_a_single_shard() {
+    let list_only: bool = kani::any();
+    let partial: bool = kani::any();
+    assert_eq!(
+        proof_complete_mutation_inventory::required(list_only, partial),
+        matches!((list_only, partial), (false, false))
+    );
+    kani::cover!(!list_only && !partial);
+    kani::cover!(!list_only && partial);
+    kani::cover!(list_only && !partial);
+    kani::cover!(list_only && partial);
+}
+
+#[kani::proof]
+fn input_limits_admit_the_boundary_and_refuse_every_larger_size() {
+    let size: usize = kani::any();
+    let limit: usize = kani::any();
+    assert_eq!(input_fits(size, limit), size < limit || size == limit);
+    kani::cover!(size < limit);
+    kani::cover!(size == limit);
+    kani::cover!(size > limit);
+}
+
+#[kani::proof]
+fn knowledge_cutoffs_include_equal_observations() {
+    let rank: u8 = kani::any();
+    kani::assume(rank < 3);
+    let order = match rank {
+        0 => core::cmp::Ordering::Less,
+        1 => core::cmp::Ordering::Equal,
+        _ => core::cmp::Ordering::Greater,
+    };
+    assert_eq!(knowledge_cutoff_accepts(order), rank <= 1);
+    kani::cover!(rank == 0);
+    kani::cover!(rank == 1);
+    kani::cover!(rank == 2);
+}
+
+#[kani::proof]
 #[kani::unwind(67)]
 fn image_digests_require_exactly_64_lowercase_hex_digits_within_65_bytes() {
     let data: [u8; 65] = kani::any();

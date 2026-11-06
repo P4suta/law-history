@@ -14,9 +14,8 @@ mise x -- npm exec --prefix web -- playwright install --with-deps chromium
 ## Usage
 
 ```sh
-mise x -- cargo run --package law-history-cli -- --store .law-history-demo sync --import fixtures/demo.json
-mise x -- npm run --prefix web build
-mise x -- cargo run --package law-history-cli -- --store .law-history-demo serve
+mise x -- just pages
+mise x -- cargo xtask pages-server
 ```
 
 ## Documentation

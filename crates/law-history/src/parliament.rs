@@ -1,11 +1,16 @@
-use crate::{Store, ingest::Fetcher, model::*};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ingest::Fetcher;
+use crate::{Store, model::*};
 use anyhow::{Context, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+#[cfg(not(target_arch = "wasm32"))]
 const SPEECH_API: &str = "https://kokkai.ndl.go.jp/api/speech";
+#[cfg(not(target_arch = "wasm32"))]
 const SPEECH_TERMS: &str = "https://kokkai.ndl.go.jp/api.html";
+#[cfg(not(target_arch = "wasm32"))]
 const SPEECH_PAGE_SIZE: usize = 100;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
@@ -124,6 +129,7 @@ pub struct Speech {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(not(target_arch = "wasm32"))]
 struct SpeechPage {
     number_of_records: usize,
     number_of_return: usize,
@@ -132,6 +138,7 @@ struct SpeechPage {
     speech_record: Option<Vec<SpeechRecord>>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl SpeechPage {
     fn validate(&self, requested_start: usize) -> anyhow::Result<()> {
         let returned = self.speech_record.as_ref().map_or(0, Vec::len);
@@ -149,6 +156,7 @@ impl SpeechPage {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(not(target_arch = "wasm32"))]
 struct SpeechRecord {
     #[serde(rename = "speechID")]
     speech_id: String,
@@ -164,6 +172,7 @@ struct SpeechRecord {
     speech_url: String,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn sync_speeches(
     store: &Store,
     fetcher: &mut Fetcher,

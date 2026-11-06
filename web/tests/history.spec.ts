@@ -65,7 +65,15 @@ test("enforcement, knowledge cutoff, comparison, references, and URL restoration
   await expect(page.getByText("申請は書面で行う。", { exact: true })).toBeVisible();
   await page.getByLabel("Known at (RFC 3339)").fill("2026-01-01T12:00:00Z");
   await page.getByRole("button", { name: "Search", exact: true }).click();
+  const parliamentaryRequest = page.waitForRequest((request) => {
+    const url = new URL(request.url());
+    return (
+      url.pathname === "/api/laws/DEMO_ACT/parliament" &&
+      url.searchParams.get("known_at") === "2026-01-01T12:00:00Z"
+    );
+  });
   await page.getByRole("button", { name: "Demonstration Act", exact: true }).click();
+  await parliamentaryRequest;
   await page.getByText("Selected law text", { exact: true }).click();
   await expect(page.getByText("第一条申請は書面で行う。", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/history-desktop.png", fullPage: true });

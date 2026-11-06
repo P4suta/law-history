@@ -1,3 +1,4 @@
+FROM node:26.13.0-trixie-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS node
 FROM rust:1.99.0-trixie@sha256:81015672d6939b0265f09adf96d5de125482bb1330106076956b0518e74edc90
 ENV CARGO_BUILD_JOBS=2
 RUN cargo install --locked --version 0.68.0 kani-verifier
@@ -5,6 +6,16 @@ RUN cargo kani setup
 RUN cargo install --locked --version 0.13.2 cargo-fuzz
 RUN cargo install --locked --version 27.1.0 cargo-mutants
 RUN rustup toolchain install nightly-2026-10-01 --profile minimal
+COPY --from=node /usr/local/ /usr/local/
+RUN rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
+RUN cargo +1.99.1 install --locked --version 0.2.130 wasm-bindgen-cli
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/law-history-browsers
+ENV LAW_HISTORY_NODE_MODULES=/opt/law-history-web/node_modules
+WORKDIR /opt/law-history-web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --ignore-scripts
+RUN npx --no-install playwright install --with-deps chromium
+RUN cargo install --locked --version 1.59.0 just
 WORKDIR /work
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates ./crates
@@ -14,3 +25,5 @@ RUN cargo fetch --locked
 RUN cargo +nightly-2026-10-01 fetch --manifest-path fuzz/Cargo.toml
 ENV CARGO_NET_OFFLINE=true
 ENV CARGO_TARGET_DIR=/tmp/law-history-verification
+ENV LAW_HISTORY_WASM_TARGET_DIR=/opt/law-history-wasm-cache
+RUN cargo build --locked --release --package law-browser --target wasm32-unknown-unknown --target-dir /opt/law-history-wasm-cache
